@@ -1,4 +1,5 @@
 # kubernetes-deploy-pilot
+NOTA very custom deploy system, very hard to use and integrate. (no documentation for now)
 
 # reference
 github-api-get.sh => https://gist.github.com/mbohun/b161521b2440b9f08b59
