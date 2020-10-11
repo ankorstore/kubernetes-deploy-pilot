@@ -1,0 +1,55 @@
+name: 'kubernetes-deploy-pilot'
+author: 'jonathan.duval@cheerz'
+description: 'An action to control and apply deployment on k8s cluster based on istio virtual service.'
+branding:
+  icon: 'upload'
+  color: 'blue'
+inputs:
+  version-to-deploy: 
+    description: 'The new version release you want to deploy'
+    required: true
+  application-name:
+    description: 'the name of the application you want to deploy'
+    required: true
+  complete:
+    description: 'Is a complete deploy'
+    required: false
+    default: "false"
+  namespace:
+    description: 'Namespace of the application'
+    required: false
+    default: "staging"
+  applicationValuePath:
+    description: 'Namespace of the application'
+    required: false
+    default: "manifest/application-value.yml"
+  networkValuePath:
+    description: 'Namespace of the application'
+    required: false
+    default: "manifest/network-value.yml" 
+outputs:
+  new-version: 
+    description: "Return the new version number deployed"
+    value: ${{ steps.main.outputs.new-version}}
+  actual-version: 
+    description: "Previous running version or v0.0.0 in case of new deployment OR equal to new-version in case of complete deployment"
+    value: ${{ steps.main.outputs.actual-version}}
+  complete: 
+    description: "Boolean of the kind of deployment executed"
+    value: ${{ steps.main.outputs.complete}}
+runs:
+  using: "composite"
+  steps: 
+    - id: main
+      env: 
+        BASE_WORKING_PATH: "${{ github.workspace }}"
+      run: |
+        ${{ github.action_path }}/main.sh \
+        ${{ inputs.version-to-deploy} \
+        ${{ inputs.application-name }} \
+        ${{ inputs.namespace }} \
+        ${{ inputs.complete }} \
+        ${{ inputs.applicationValuePath }} \
+        ${{ inputs.networkValuePath }}
+      shell: bash
+    
