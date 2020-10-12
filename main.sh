@@ -6,7 +6,7 @@
 versionToDeploy=$1;
 applicationName=$2
 namespace=$3
-completeDeploy=$4;
+action=$4
 applicationValuePath=$5;
 networkValuePath=$6;
 actualVersion="v0.0.0"
@@ -54,37 +54,44 @@ if [[ $checkApplicationDeployedReturn == false ]]; then
   cheerz-registry/web-application 
 fi
 
-# if no version already running, force full deploy
-if [[ $actualVersion == "v0.0.0" ]]; then
-  completeDeploy="true"
-fi
-
 # Decision tree for network deploy part
 if [[ $checkNetworkDeployedReturn == false ]]; then
-  if [[ $completeDeploy == true ]]; then
+  if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     helm install -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=$completeDeploy  \
+    --set deploy.complete=true  \
     --set deploy.newVersion=$versionToDeploy \
+    ${applicationName}-network \
+    cheerz-registry/web-network 
+  elif [[ $action == "cancel" ]]; then
+    helm install -f $BASE_WORKING_PATH/$networkValuePath \
+    --set deploy.complete=true  \
+    --set deploy.newVersion=$actualVersion \
     ${applicationName}-network \
     cheerz-registry/web-network 
   else
     helm install -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=$completeDeploy  \
+    --set deploy.complete=false  \
     --set deploy.runningVersion=$actualVersion \
     --set deploy.newVersion=$versionToDeploy \
     ${applicationName}-network \
     cheerz-registry/web-network 
   fi
 else
-  if [[ $completeDeploy == true ]]; then
+  if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=$completeDeploy \
+    --set deploy.complete=true \
     --set deploy.newVersion=$versionToDeploy \
+    ${applicationName}-network \
+    cheerz-registry/web-network 
+  elif [[ $action == "cancel" ]]; then
+    helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
+    --set deploy.complete=true  \
+    --set deploy.newVersion=$actualVersion \
     ${applicationName}-network \
     cheerz-registry/web-network 
   else
     helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=$completeDeploy \
+    --set deploy.complete=false \
     --set deploy.runningVersion=$actualVersion \
     --set deploy.newVersion=$versionToDeploy \
     ${applicationName}-network \
@@ -94,13 +101,17 @@ fi
 
 
 
-if [[ $actualVersion != "v0.0.0" ]] && [[ $completeDeploy == true ]] && [[ $actualVersion != $versionToDeploy ]]; then
+if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]]; then
   # delete old useless version
-  helm delete ${applicationName}-${actualVersion}
+  if [[ $action == "complete" ]]; then
+    helm delete ${applicationName}-${actualVersion}
+  elif [[ $action == "cancel" ]]; then
+    helm delete ${applicationName}-${versionToDeploy}
+  fi
 fi
 
 # clean if old release stay in place
-if [[ $actualVersion != "v0.0.0" ]] && [[ $completeDeploy == true ]]; then
+if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $action == "cancel" ]] ); then
   listRelease=$(helm ls -q --filter $applicationName-v.*)
   for release in $listRelease
   do
@@ -110,10 +121,11 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $completeDeploy == true ]]; then
   done
 fi
 
+
+
 ##############################################################
 ########################## OUPUT #############################
 ##############################################################
 
 echo "::set-output name=new-version:$(echo $versionToDeploy)"
 echo "::set-output name=actual-version:$(echo $actualVersion)"
-echo "::set-output name=complete::$(echo $completeDeploy)"

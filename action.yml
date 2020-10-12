@@ -11,10 +11,9 @@ inputs:
   application-name:
     description: 'the name of the application you want to deploy'
     required: true
-  complete:
-    description: 'Is a complete deploy'
+  action:
+    description: 'Deploy action to apply (create|complete|cancel)'
     required: false
-    default: "false"
   namespace:
     description: 'Namespace of the application'
     required: false
@@ -34,9 +33,6 @@ outputs:
   actual-version: 
     description: "Previous running version or v0.0.0 in case of new deployment OR equal to new-version in case of complete deployment"
     value: ${{ steps.main.outputs.actual-version}}
-  complete: 
-    description: "Boolean of the kind of deployment executed"
-    value: ${{ steps.main.outputs.complete}}
 runs:
   using: "composite"
   steps: 
