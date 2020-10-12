@@ -40,12 +40,20 @@ outputs:
 runs:
   using: "composite"
   steps: 
+    - name: gcloud-auth
+      run: |
+        echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode > ${HOME}/gcloud.json
+        gcloud auth activate-service-account --key-file=${HOME}/gcloud.json
+        gcloud auth configure-docker
+        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} --region ${{ secrets.GOOGLE_DEFAULT_REGION }} --project ${{ secrets.GOOGLE_PROJECT_ID }}
+        helm repo add cheerz-registry http://charts.k8s.cheerz.net
+      shell: bash
     - id: main
       env: 
         BASE_WORKING_PATH: "${{ github.workspace }}"
       run: |
         ${{ github.action_path }}/main.sh \
-        ${{ inputs.version-to-deploy} \
+        ${{ inputs.version-to-deploy }} \
         ${{ inputs.application-name }} \
         ${{ inputs.namespace }} \
         ${{ inputs.complete }} \
