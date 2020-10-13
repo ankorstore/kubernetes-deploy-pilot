@@ -44,7 +44,7 @@ runs:
         ${{ inputs.version-to-deploy }} \
         ${{ inputs.application-name }} \
         ${{ inputs.namespace }} \
-        ${{ inputs.complete }} \
+        ${{ inputs.action }} \
         ${{ inputs.applicationValuePath }} \
         ${{ inputs.networkValuePath }}
       shell: bash
