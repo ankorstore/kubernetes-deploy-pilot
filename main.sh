@@ -3,12 +3,13 @@
 ##############################################################
 ####################### VARIABLE #############################
 ##############################################################
-versionToDeploy=$1;
+versionToDeploy=$1
 applicationName=$2
 namespace=$3
 action=$4
-applicationValuePath=$5;
-networkValuePath=$6;
+useApplicationVersionForImageTag=$5
+applicationValuePath=$6
+networkValuePath=$7
 actualVersion="v0.0.0"
 checkApplicationDeployedReturn="false"
 checkNetworkDeployedReturn="false"
@@ -48,10 +49,18 @@ checkApplicationDeployed;
 
 # if new version is not deployed yet, do it
 if [[ $checkApplicationDeployedReturn == false ]]; then
-  helm install -f $BASE_WORKING_PATH/$applicationValuePath \
-  --set application.version=$versionToDeploy \
-  ${applicationName}-$versionToDeploy \
-  cheerz-registry/web-application 
+  if [[ $checkApplicationDeployedReturn == false ]]; then
+    helm install -f $BASE_WORKING_PATH/$applicationValuePath \
+    --set application.version=$versionToDeploy \
+    ${applicationName}-$versionToDeploy \
+    cheerz-registry/web-application 
+  else
+    helm install -f $BASE_WORKING_PATH/$applicationValuePath \
+    --set application.version=$versionToDeploy \
+    --set application.image.tag=$versionToDeploy \
+    ${applicationName}-$versionToDeploy \
+    cheerz-registry/web-application 
+  fi
 fi
 
 # Decision tree for network deploy part

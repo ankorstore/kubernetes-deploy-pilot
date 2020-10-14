@@ -26,6 +26,10 @@ inputs:
     description: 'Namespace of the application'
     required: false
     default: "manifest/network-value.yml" 
+  useApplicationVersionForImageTag:
+    description: 'Do we use the new application version to set the docker image tag'
+    required: false
+    default: "false" 
 outputs:
   new-version: 
     description: "Return the new version number deployed"
@@ -45,6 +49,7 @@ runs:
         ${{ inputs.application-name }} \
         ${{ inputs.namespace }} \
         ${{ inputs.action }} \
+        ${{ inputs.useApplicationVersionForImageTag }} \
         ${{ inputs.applicationValuePath }} \
         ${{ inputs.networkValuePath }}
       shell: bash
