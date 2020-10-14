@@ -49,7 +49,7 @@ checkApplicationDeployed;
 
 # if new version is not deployed yet, do it
 if [[ $checkApplicationDeployedReturn == false ]]; then
-  if [[ $checkApplicationDeployedReturn == false ]]; then
+  if [[ $useApplicationVersionForImageTag == false ]]; then
     helm install -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$versionToDeploy \
     ${applicationName}-$versionToDeploy \
