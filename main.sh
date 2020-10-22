@@ -49,6 +49,10 @@ get_running_version;
 checkNetworkDeployed;
 checkApplicationDeployed;
 
+# update all helm repository
+helm repo add cheerz-registry http://charts.k8s.cheerz.net
+helm repo update
+
 # if new version is not deployed yet, do it
 if [[ $checkApplicationDeployedReturn == false ]]; then
   if [[ $useApplicationVersionForImageTag == false ]]; then
