@@ -10,6 +10,8 @@ action=$4
 useApplicationVersionForImageTag=$5
 applicationValuePath=$6
 networkValuePath=$7
+ApplicationChartVersion=$8
+networkChartVersion=$9
 actualVersion="v0.0.0"
 checkApplicationDeployedReturn="false"
 checkNetworkDeployedReturn="false"
@@ -53,12 +55,14 @@ if [[ $checkApplicationDeployedReturn == false ]]; then
     helm install -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$versionToDeploy \
     ${applicationName}-$versionToDeploy \
+    --version $ApplicationChartVersion \
     cheerz-registry/web-application 
   else
     helm install -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$versionToDeploy \
     --set application.image.tag=$versionToDeploy \
     ${applicationName}-$versionToDeploy \
+    --version $ApplicationChartVersion \
     cheerz-registry/web-application 
   fi
 fi
@@ -70,6 +74,7 @@ if [[ $checkNetworkDeployedReturn == false ]]; then
     --set deploy.complete=true  \
     --set deploy.newVersion=$versionToDeploy \
     ${applicationName}-network \
+    --version $networkChartVersion \
     cheerz-registry/web-network 
   elif [[ $action == "cancel" ]]; then
     helm install -f $BASE_WORKING_PATH/$networkValuePath \
@@ -82,6 +87,7 @@ if [[ $checkNetworkDeployedReturn == false ]]; then
     --set deploy.complete=false  \
     --set deploy.runningVersion=$actualVersion \
     --set deploy.newVersion=$versionToDeploy \
+    --version $networkChartVersion \
     ${applicationName}-network \
     cheerz-registry/web-network 
   fi
@@ -91,11 +97,13 @@ else
     --set deploy.complete=true \
     --set deploy.newVersion=$versionToDeploy \
     ${applicationName}-network \
+    --version $networkChartVersion \
     cheerz-registry/web-network 
   elif [[ $action == "cancel" ]]; then
     helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
     --set deploy.complete=true  \
     --set deploy.newVersion=$actualVersion \
+    --version $networkChartVersion \
     ${applicationName}-network \
     cheerz-registry/web-network 
   else
@@ -103,6 +111,7 @@ else
     --set deploy.complete=false \
     --set deploy.runningVersion=$actualVersion \
     --set deploy.newVersion=$versionToDeploy \
+    --version $networkChartVersion \
     ${applicationName}-network \
     cheerz-registry/web-network 
   fi
