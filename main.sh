@@ -10,11 +10,15 @@ action=$4
 useApplicationVersionForImageTag=$5
 applicationValuePath=$6
 networkValuePath=$7
-ApplicationChartVersion=$8
+applicationChartVersion=$8
 networkChartVersion=$9
 actualVersion="v0.0.0"
 checkApplicationDeployedReturn="false"
 checkNetworkDeployedReturn="false"
+helmChartRepositoryName="cheerz-registry"
+helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
+applicationChartName="web-application"
+networkChartName="web-network"
 
 ##############################################################
 ####################### FUNCTIONS ############################
@@ -50,8 +54,16 @@ checkNetworkDeployed;
 checkApplicationDeployed;
 
 # update all helm repository
-helm repo add cheerz-registry http://charts.k8s.cheerz.net
+helm repo add $helmChartRepositoryName $helmChartRepositoryAddress
 helm repo update
+
+# convert latest version name in the last avaible version on repo
+if [[ $applicationChartVersion == "latest" ]]; then
+  $applicationChartVersion=$(helm show chart $helmChartRepositoryName/$applicationChartName | grep "version:" | awk '{ print $2}')
+fi
+if [[ $networkChartVersion == "latest" ]]; then
+  $networkChartVersion=$(helm show chart $helmChartRepositoryName/$networkChartName | grep "version:" | awk '{ print $2}')
+fi
 
 # if new version is not deployed yet, do it
 if [[ $checkApplicationDeployedReturn == false ]]; then
@@ -59,15 +71,15 @@ if [[ $checkApplicationDeployedReturn == false ]]; then
     helm install -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$versionToDeploy \
     ${applicationName}-$versionToDeploy \
-    --version $ApplicationChartVersion \
-    cheerz-registry/web-application 
+    --version $applicationChartVersion \
+    $helmChartRepositoryName/$applicationChartName 
   else
     helm install -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$versionToDeploy \
     --set application.image.tag=$versionToDeploy \
     ${applicationName}-$versionToDeploy \
-    --version $ApplicationChartVersion \
-    cheerz-registry/web-application 
+    --version $applicationChartVersion \
+    $helmChartRepositoryName/$applicationChartName  
   fi
 fi
 
@@ -79,13 +91,13 @@ if [[ $checkNetworkDeployedReturn == false ]]; then
     --set deploy.newVersion=$versionToDeploy \
     ${applicationName}-network \
     --version $networkChartVersion \
-    cheerz-registry/web-network 
+    $helmChartRepositoryName/$networkChartName 
   elif [[ $action == "cancel" ]]; then
     helm install -f $BASE_WORKING_PATH/$networkValuePath \
     --set deploy.complete=true  \
     --set deploy.newVersion=$actualVersion \
     ${applicationName}-network \
-    cheerz-registry/web-network 
+    $helmChartRepositoryName/$networkChartName 
   else
     helm install -f $BASE_WORKING_PATH/$networkValuePath \
     --set deploy.complete=false  \
@@ -93,7 +105,7 @@ if [[ $checkNetworkDeployedReturn == false ]]; then
     --set deploy.newVersion=$versionToDeploy \
     --version $networkChartVersion \
     ${applicationName}-network \
-    cheerz-registry/web-network 
+    $helmChartRepositoryName/$networkChartName 
   fi
 else
   if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
@@ -102,14 +114,14 @@ else
     --set deploy.newVersion=$versionToDeploy \
     ${applicationName}-network \
     --version $networkChartVersion \
-    cheerz-registry/web-network 
+    $helmChartRepositoryName/$networkChartName 
   elif [[ $action == "cancel" ]]; then
     helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
     --set deploy.complete=true  \
     --set deploy.newVersion=$actualVersion \
     --version $networkChartVersion \
     ${applicationName}-network \
-    cheerz-registry/web-network 
+    $helmChartRepositoryName/$networkChartName 
   else
     helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
     --set deploy.complete=false \
@@ -117,7 +129,7 @@ else
     --set deploy.newVersion=$versionToDeploy \
     --version $networkChartVersion \
     ${applicationName}-network \
-    cheerz-registry/web-network 
+    $helmChartRepositoryName/$networkChartName 
   fi
 fi
 
