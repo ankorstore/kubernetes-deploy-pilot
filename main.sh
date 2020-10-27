@@ -13,8 +13,6 @@ networkValuePath=$7
 applicationChartVersion=$8
 networkChartVersion=$9
 actualVersion="v0.0.0"
-checkApplicationDeployedReturn="false"
-checkNetworkDeployedReturn="false"
 helmChartRepositoryName="cheerz-registry"
 helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
 applicationChartName="web-application"
@@ -32,26 +30,10 @@ function get_running_version {
   fi
 }
 
-function checkNetworkDeployed {
-  local return=$(helm ls -q --filter $applicationName-network)
-  if [[ ${return[@]} ]]; then
-    checkNetworkDeployedReturn="true"
-  fi
-}
-
-function checkApplicationDeployed {
-  local return=$(helm ls -q --filter ${applicationName}-$versionToDeploy)
-  if [[ ${return[@]} ]]; then
-    checkApplicationDeployedReturn="true"
-  fi
-}
-
 ##############################################################
 ########################## CODE ##############################
 ##############################################################
 get_running_version;
-checkNetworkDeployed;
-checkApplicationDeployed;
 
 # update all helm repository
 helm repo add $helmChartRepositoryName $helmChartRepositoryAddress
@@ -66,73 +48,43 @@ if [[ $networkChartVersion == "latest" ]]; then
 fi
 
 # if new version is not deployed yet, do it
-if [[ $checkApplicationDeployedReturn == false ]]; then
-  if [[ $useApplicationVersionForImageTag == false ]]; then
-    helm install -f $BASE_WORKING_PATH/$applicationValuePath \
-    --set application.version=$versionToDeploy \
-    ${applicationName}-$versionToDeploy \
-    --version $applicationChartVersion \
-    $helmChartRepositoryName/$applicationChartName 
-  else
-    helm install -f $BASE_WORKING_PATH/$applicationValuePath \
-    --set application.version=$versionToDeploy \
-    --set application.image.tag=$versionToDeploy \
-    ${applicationName}-$versionToDeploy \
-    --version $applicationChartVersion \
-    $helmChartRepositoryName/$applicationChartName  
-  fi
-fi
-
-# Decision tree for network deploy part
-if [[ $checkNetworkDeployedReturn == false ]]; then
-  if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-    helm install -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=true  \
-    --set deploy.newVersion=$versionToDeploy \
-    ${applicationName}-network \
-    --version $networkChartVersion \
-    $helmChartRepositoryName/$networkChartName 
-  elif [[ $action == "cancel" ]]; then
-    helm install -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=true  \
-    --set deploy.newVersion=$actualVersion \
-    ${applicationName}-network \
-    $helmChartRepositoryName/$networkChartName 
-  else
-    helm install -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=false  \
-    --set deploy.runningVersion=$actualVersion \
-    --set deploy.newVersion=$versionToDeploy \
-    --version $networkChartVersion \
-    ${applicationName}-network \
-    $helmChartRepositoryName/$networkChartName 
-  fi
+if [[ $useApplicationVersionForImageTag == false ]]; then
+  helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+  --set application.version=$versionToDeploy \
+  ${applicationName}-$versionToDeploy \
+  --version $applicationChartVersion \
+  $helmChartRepositoryName/$applicationChartName 
 else
-  if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-    helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=true \
-    --set deploy.newVersion=$versionToDeploy \
-    ${applicationName}-network \
-    --version $networkChartVersion \
-    $helmChartRepositoryName/$networkChartName 
-  elif [[ $action == "cancel" ]]; then
-    helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=true  \
-    --set deploy.newVersion=$actualVersion \
-    --version $networkChartVersion \
-    ${applicationName}-network \
-    $helmChartRepositoryName/$networkChartName 
-  else
-    helm upgrade -f $BASE_WORKING_PATH/$networkValuePath \
-    --set deploy.complete=false \
-    --set deploy.runningVersion=$actualVersion \
-    --set deploy.newVersion=$versionToDeploy \
-    --version $networkChartVersion \
-    ${applicationName}-network \
-    $helmChartRepositoryName/$networkChartName 
-  fi
+  helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+  --set application.version=$versionToDeploy \
+  --set application.image.tag=$versionToDeploy \
+  ${applicationName}-$versionToDeploy \
+  --version $applicationChartVersion \
+  $helmChartRepositoryName/$applicationChartName  
 fi
-
+if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+  helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  --set deploy.complete=true \
+  --set deploy.newVersion=$versionToDeploy \
+  ${applicationName}-network \
+  --version $networkChartVersion \
+  $helmChartRepositoryName/$networkChartName 
+elif [[ $action == "cancel" ]]; then
+  helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  --set deploy.complete=true  \
+  --set deploy.newVersion=$actualVersion \
+  --version $networkChartVersion \
+  ${applicationName}-network \
+  $helmChartRepositoryName/$networkChartName 
+else
+  helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  --set deploy.complete=false \
+  --set deploy.runningVersion=$actualVersion \
+  --set deploy.newVersion=$versionToDeploy \
+  --version $networkChartVersion \
+  ${applicationName}-network \
+  $helmChartRepositoryName/$networkChartName 
+fi
 
 
 if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]]; then
