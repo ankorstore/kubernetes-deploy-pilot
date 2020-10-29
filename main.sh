@@ -101,7 +101,7 @@ if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $acti
   listRelease=$(helm ls -q --filter $applicationName-v.*)
   for release in $listRelease
   do
-    if [[ $release != ${applicationName}-${versionToDeploy} ]]; then
+    if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]]; then
       helm delete $release
     fi
   done
