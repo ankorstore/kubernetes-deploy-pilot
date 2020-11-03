@@ -100,7 +100,7 @@ if [[ $action == "complete" ]]; then
   if [ "$actualVersionReplicas" -eq "$actualVersionReplicas" ] && [ "$VersionToDeployMinReplicas" -eq "$VersionToDeployMinReplicas" ] 2>/dev/null
   then
     #security to avoid going under new version min replicas
-    if [[ $VersionToDeployMinReplicas > $actualVersionReplicas]]; then
+    if [[ $VersionToDeployMinReplicas > $actualVersionReplicas ]]; then
       actualVersionReplicas=$VersionToDeployMinReplicas
     fi
     kubectl scale deploy ${applicationName}-$safeVersionToDeploy-deploy -n $namespace --replicas=$actualVersionReplicas
