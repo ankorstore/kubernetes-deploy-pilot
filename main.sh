@@ -38,7 +38,7 @@ function get_running_version {
 get_running_version;
 
 # Security to avoid upgrading in production version
-if [[ $actualVersion != $versionToDeploy ]]; then
+if [[ $actualVersion == $versionToDeploy ]]; then
   echo "The version you try to deploy is already in production."
   echo "Please update version number."
   exit 1;
