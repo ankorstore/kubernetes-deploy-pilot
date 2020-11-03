@@ -17,6 +17,8 @@ helmChartRepositoryName="cheerz-registry"
 helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
 applicationChartName="web-application"
 networkChartName="web-network"
+safeActualVersion=$(echo $actualVersion | sed 's/\./-/g')
+safeVersionToDeploy=$(echo $versionToDeploy | sed 's/\./-/g')
 
 ##############################################################
 ####################### FUNCTIONS ############################
@@ -31,9 +33,20 @@ function get_running_version {
 }
 
 ##############################################################
-########################## CODE ##############################
+################### Init and security ########################
 ##############################################################
 get_running_version;
+
+# Security to avoid upgrading in production version
+if [[ $actualVersion != $versionToDeploy ]]; then
+  echo "The version you try to deploy is already in production."
+  echo "Please update version number."
+  exit 1;
+fi
+
+##############################################################
+####################### Helm init ############################
+##############################################################
 
 # update all helm repository
 helm repo add $helmChartRepositoryName $helmChartRepositoryAddress
@@ -46,6 +59,10 @@ fi
 if [[ $networkChartVersion == "latest" ]]; then
   networkChartVersion=$(helm show chart $helmChartRepositoryName/$networkChartName | grep "version:" | awk '{ print $2}')
 fi
+
+##############################################################
+################# Application Deploy #########################
+##############################################################
 
 # if new version is not deployed yet, do it
 if [[ $useApplicationVersionForImageTag == false ]]; then
@@ -62,10 +79,43 @@ else
   --version $applicationChartVersion \
   $helmChartRepositoryName/$applicationChartName  
 fi
+# Security to stop the process in case of faillure
+if [[ $? != 0 ]]; then
+  echo "Fail to deploy application with code : $?"
+  echo "Deploy canceled"
+  exit 1;
+fi
+
+##############################################################
+################### Deploy auto scaler #######################
+##############################################################
+
+ # Auto scale new version to be ready for prod volume
+if [[ $action == "complete" ]]; then
+  # get replicas on running version
+  actualVersionReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeActualVersion-hpa -o template --template={{.status.currentReplicas}})
+  # get new version min replicas
+  VersionToDeployMinReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeVersionToDeploy-hpa -o template --template={{.spec.minReplicas}})
+  # check if valid int
+  if [ "$actualVersionReplicas" -eq "$actualVersionReplicas" ] && [ "$VersionToDeployMinReplicas" -eq "$VersionToDeployMinReplicas" ] 2>/dev/null
+  then
+    #security to avoid going under new version min replicas
+    if [[ $VersionToDeployMinReplicas > $actualVersionReplicas]]; then
+      actualVersionReplicas=$VersionToDeployMinReplicas
+    fi
+    kubectl scale deploy ${applicationName}-$safeVersionToDeploy-deploy -n $namespace --replicas=$actualVersionReplicas
+  fi
+fi
+
+##############################################################
+############### Network deploy and update ####################
+##############################################################
+
+# Deploy the network part
 if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
   --set deploy.complete=true \
-  --set deploy.newVersion=$versionToDeploy \
+  --set deploy.newVersion=$v \
   ${applicationName}-network \
   --version $networkChartVersion \
   $helmChartRepositoryName/$networkChartName 
@@ -85,8 +135,18 @@ else
   ${applicationName}-network \
   $helmChartRepositoryName/$networkChartName 
 fi
+# Security to stop the process in case of faillure
+if [[ $? != 0 ]]; then
+  echo "Fail to deploy Network with code : $?"
+  echo "Deploy canceled"
+  exit 1;
+fi
 
+##############################################################
+############ Clean and archive to keep env clean #############
+##############################################################
 
+# Soft old version cleaner
 if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]]; then
   # delete old useless version
   if [[ $action == "complete" ]]; then
@@ -96,7 +156,7 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]];
   fi
 fi
 
-# clean if old release stay in place
+# Hard archive version cleaner (normally never trigger just in case of faillure with artifact)
 if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $action == "cancel" ]] ); then
   listRelease=$(helm ls -q --filter $applicationName-v.*)
   for release in $listRelease
@@ -106,7 +166,6 @@ if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $acti
     fi
   done
 fi
-
 
 
 ##############################################################
