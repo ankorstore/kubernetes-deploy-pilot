@@ -115,7 +115,7 @@ fi
 if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
   --set deploy.complete=true \
-  --set deploy.newVersion=$v \
+  --set deploy.newVersion=$versionToDeploy \
   ${applicationName}-network \
   --version $networkChartVersion \
   $helmChartRepositoryName/$networkChartName 
