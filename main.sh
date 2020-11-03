@@ -91,7 +91,7 @@ fi
 ##############################################################
 
  # Auto scale new version to be ready for prod volume
-if [[ $action == "complete" ]]; then
+if [[ $action == "complete" ]] && [[ $actualVersion != "v0.0.0" ]]; then
   # get replicas on running version
   actualVersionReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeActualVersion-hpa -o template --template={{.status.currentReplicas}})
   # get new version min replicas
