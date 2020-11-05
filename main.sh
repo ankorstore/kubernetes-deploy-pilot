@@ -174,7 +174,7 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]];
     -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$actualVersion \
     --set application.image.tag=$actualVersion \
-    --set autoscaling.minReplicas=0 \
+    --set autoscaling.minReplicas=1 \
     --version $applicationChartVersion \
     -n $namespace \
     ${applicationName}-$actualVersion \
