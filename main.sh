@@ -73,20 +73,20 @@ fi
 # if new version is not deployed yet, do it
 if [[ $useApplicationVersionForImageTag == false ]]; then
     helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
-    -n $namespace \
     --set application.version=$versionToDeploy \
     --set application.image.pullPolicy=$imagePullPolicy \
     ${applicationName}-$versionToDeploy \
     --version $applicationChartVersion \
+    -n $namespace \
     $helmChartRepositoryName/$applicationChartName 
 else
     helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
-    -n $namespace \
     --set application.version=$versionToDeploy \
     --set application.image.tag=$versionToDeploy \
     --set application.image.pullPolicy=$imagePullPolicy \
     ${applicationName}-$versionToDeploy \
     --version $applicationChartVersion \
+    -n $namespace \
     $helmChartRepositoryName/$applicationChartName  
 fi
 # Security to stop the process in case of faillure
@@ -124,28 +124,28 @@ fi
 # Deploy the network part
 if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
-  -n $namespace \
   --set deploy.complete=true \
   --set deploy.newVersion=$versionToDeploy \
   ${applicationName}-network \
   --version $networkChartVersion \
+  -n $namespace \
   $helmChartRepositoryName/$networkChartName 
 elif [[ $action == "cancel" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
-  -n $namespace \
   --set deploy.complete=true  \
   --set deploy.newVersion=$actualVersion \
   --version $networkChartVersion \
   ${applicationName}-network \
+  -n $namespace \
   $helmChartRepositoryName/$networkChartName 
 else
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
-  -n $namespace \
   --set deploy.complete=false \
   --set deploy.runningVersion=$actualVersion \
   --set deploy.newVersion=$versionToDeploy \
   --version $networkChartVersion \
   ${applicationName}-network \
+  -n $namespace \
   $helmChartRepositoryName/$networkChartName 
 fi
 # Security to stop the process in case of faillure
@@ -163,19 +163,19 @@ fi
 if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]]; then
   # delete old useless version
   if [[ $action == "complete" ]]; then
-    helm delete ${applicationName}-${actualVersion}
+    helm delete -n $namespace ${applicationName}-${actualVersion}
   elif [[ $action == "cancel" ]]; then
-    helm delete ${applicationName}-${versionToDeploy}
+    helm delete -n $namespace ${applicationName}-${versionToDeploy}
   fi
 fi
 
 # Hard archive version cleaner (normally never trigger just in case of faillure with artifact)
 if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $action == "cancel" ]] ); then
-  listRelease=$(helm ls -q --filter $applicationName-v.*)
+  listRelease=$(helm ls -n $namespace -q --filter $applicationName-v.*)
   for release in $listRelease
   do
     if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]]; then
-      helm delete $release
+      helm delete -n $namespace $release
     fi
   done
 fi
