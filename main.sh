@@ -17,8 +17,6 @@ helmChartRepositoryName="cheerz-registry"
 helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
 applicationChartName="web-application"
 networkChartName="web-network"
-safeActualVersion=$(echo $actualVersion | sed 's/\./-/g')
-safeVersionToDeploy=$(echo $versionToDeploy | sed 's/\./-/g')
 imagePullPolicy="IfNotPresent"
 
 ##############################################################
@@ -37,6 +35,8 @@ function get_running_version {
 ################### Init and security ########################
 ##############################################################
 get_running_version;
+safeActualVersion=$(echo $actualVersion | sed 's/\./-/g')
+safeVersionToDeploy=$(echo $versionToDeploy | sed 's/\./-/g')
 
 # Security to avoid upgrading in production version
 if [[ $actualVersion == $versionToDeploy ]] && [[ $action != "update" ]] ; then
