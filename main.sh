@@ -105,7 +105,7 @@ if [[ $action == "complete" ]] && [[ $actualVersion != "v0.0.0" ]]; then
   # get new version min replicas
   VersionToDeployMinReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeVersionToDeploy-hpa -o template --template={{.spec.minReplicas}})
   # check if valid int
-  if [ "$actualVersionReplicas" -eq "$actualVersionReplicas" ] && [ "$VersionToDeployMinReplicas" -eq "$VersionToDeployMinReplicas" ] 2>/dev/null
+  if [[ "$actualVersionReplicas" == "$actualVersionReplicas" ]] && [[ "$VersionToDeployMinReplicas" == "$VersionToDeployMinReplicas" ]] 2>/dev/null
   then
     #security to avoid going under new version min replicas
     if [[ $VersionToDeployMinReplicas > $actualVersionReplicas ]]; then
