@@ -39,7 +39,7 @@ safeActualVersion=$(echo $actualVersion | sed 's/\./-/g')
 safeVersionToDeploy=$(echo $versionToDeploy | sed 's/\./-/g')
 
 # Security to avoid upgrading in production version
-if [[ $actualVersion == $versionToDeploy ]] && [[ $action != "update" ]] && [[ $action != "complete" ]]; then
+if [[ $actualVersion == $versionToDeploy ]] && [[ $action != "update" ]]; then
   echo "The version you try to deploy is already in production."
   echo "Please update version number."
   exit 1;
