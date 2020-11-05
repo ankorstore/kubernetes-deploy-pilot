@@ -77,8 +77,8 @@ if [[ $useApplicationVersionForImageTag == false ]]; then
     --set application.image.pullPolicy=$imagePullPolicy \
     --version $applicationChartVersion \
     -n $namespace \
-    ${applicationName}-$versionToDeploy \ # RELEASE NAME
-    $helmChartRepositoryName/$applicationChartName # CHART NAME
+    ${applicationName}-$versionToDeploy \
+    $helmChartRepositoryName/$applicationChartName 
 else
     helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$versionToDeploy \
@@ -86,8 +86,8 @@ else
     --set application.image.pullPolicy=$imagePullPolicy \
     --version $applicationChartVersion \
     -n $namespace \
-    ${applicationName}-$versionToDeploy \ # RELEASE NAME
-    $helmChartRepositoryName/$applicationChartName  # CHART NAME
+    ${applicationName}-$versionToDeploy \ 
+    $helmChartRepositoryName/$applicationChartName  
 fi
 # Security to stop the process in case of faillure
 if [[ $? != 0 ]]; then
@@ -128,16 +128,16 @@ if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   --set deploy.newVersion=$versionToDeploy \
   --version $networkChartVersion \
   -n $namespace \
-  ${applicationName}-network \ # RELEASE NAME
-  $helmChartRepositoryName/$networkChartName # CHART NAME
+  ${applicationName}-network \ 
+  $helmChartRepositoryName/$networkChartName 
 elif [[ $action == "cancel" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
   --set deploy.complete=true  \
   --set deploy.newVersion=$actualVersion \
   ${applicationName}-network \
   -n $namespace \
-  --version $networkChartVersion \ # RELEASE NAME
-  $helmChartRepositoryName/$networkChartName # CHART NAME
+  --version $networkChartVersion \ 
+  $helmChartRepositoryName/$networkChartName 
 else
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
   --set deploy.complete=false \
@@ -145,8 +145,8 @@ else
   --set deploy.newVersion=$versionToDeploy \
   --version $networkChartVersion \
   -n $namespace \
-  ${applicationName}-network \ # RELEASE NAME
-  $helmChartRepositoryName/$networkChartName # CHART NAME
+  ${applicationName}-network \ 
+  $helmChartRepositoryName/$networkChartName 
 fi
 # Security to stop the process in case of faillure
 if [[ $? != 0 ]]; then
@@ -172,8 +172,8 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]];
     --set autoscaling.minReplicas=0 \
     --version $applicationChartVersion \
     -n $namespace \
-    ${applicationName}-$actualVersion \ # RELEASE NAME
-    $helmChartRepositoryName/$applicationChartName # CHART NAME
+    ${applicationName}-$actualVersion \
+    $helmChartRepositoryName/$applicationChartName 
   elif [[ $action == "cancel" ]]; then
     helm delete -n $namespace ${applicationName}-${versionToDeploy}
   fi
