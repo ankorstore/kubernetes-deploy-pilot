@@ -73,6 +73,7 @@ fi
 # if new version is not deployed yet, do it
 if [[ $useApplicationVersionForImageTag == false ]]; then
     helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+    -n $namespace \
     --set application.version=$versionToDeploy \
     --set application.image.pullPolicy=$imagePullPolicy \
     ${applicationName}-$versionToDeploy \
@@ -80,6 +81,7 @@ if [[ $useApplicationVersionForImageTag == false ]]; then
     $helmChartRepositoryName/$applicationChartName 
 else
     helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+    -n $namespace \
     --set application.version=$versionToDeploy \
     --set application.image.tag=$versionToDeploy \
     --set application.image.pullPolicy=$imagePullPolicy \
@@ -122,6 +124,7 @@ fi
 # Deploy the network part
 if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  -n $namespace \
   --set deploy.complete=true \
   --set deploy.newVersion=$versionToDeploy \
   ${applicationName}-network \
@@ -129,6 +132,7 @@ if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   $helmChartRepositoryName/$networkChartName 
 elif [[ $action == "cancel" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  -n $namespace \
   --set deploy.complete=true  \
   --set deploy.newVersion=$actualVersion \
   --version $networkChartVersion \
@@ -136,6 +140,7 @@ elif [[ $action == "cancel" ]]; then
   $helmChartRepositoryName/$networkChartName 
 else
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  -n $namespace \
   --set deploy.complete=false \
   --set deploy.runningVersion=$actualVersion \
   --set deploy.newVersion=$versionToDeploy \
