@@ -98,7 +98,7 @@ fi
 
 # force roll out to be sure to have the last version 
 if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
-  kubectl rollout restart -n $namespace deployment.apps/${applicationName}-$versionToDeploy-deploy
+  kubectl rollout restart -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy
 fi
 
 ##############################################################
