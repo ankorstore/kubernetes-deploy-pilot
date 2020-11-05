@@ -74,7 +74,7 @@ fi
 if [[ $useApplicationVersionForImageTag == false ]]; then
     helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$versionToDeploy \
-    --set application.image.pullPolicy= $imagePullPolicy \
+    --set application.image.pullPolicy=$imagePullPolicy \
     ${applicationName}-$versionToDeploy \
     --version $applicationChartVersion \
     $helmChartRepositoryName/$applicationChartName 
@@ -82,7 +82,7 @@ else
     helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
     --set application.version=$versionToDeploy \
     --set application.image.tag=$versionToDeploy \
-    --set application.image.pullPolicy= $imagePullPolicy \
+    --set application.image.pullPolicy=$imagePullPolicy \
     ${applicationName}-$versionToDeploy \
     --version $applicationChartVersion \
     $helmChartRepositoryName/$applicationChartName  
