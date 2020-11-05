@@ -86,7 +86,7 @@ else
     --set application.image.pullPolicy=$imagePullPolicy \
     --version $applicationChartVersion \
     -n $namespace \
-    ${applicationName}-$versionToDeploy \ 
+    ${applicationName}-$versionToDeploy \
     $helmChartRepositoryName/$applicationChartName  
 fi
 # Security to stop the process in case of faillure
@@ -128,7 +128,7 @@ if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   --set deploy.newVersion=$versionToDeploy \
   --version $networkChartVersion \
   -n $namespace \
-  ${applicationName}-network \ 
+  ${applicationName}-network \
   $helmChartRepositoryName/$networkChartName 
 elif [[ $action == "cancel" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
@@ -136,7 +136,7 @@ elif [[ $action == "cancel" ]]; then
   --set deploy.newVersion=$actualVersion \
   ${applicationName}-network \
   -n $namespace \
-  --version $networkChartVersion \ 
+  --version $networkChartVersion \
   $helmChartRepositoryName/$networkChartName 
 else
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
@@ -145,7 +145,7 @@ else
   --set deploy.newVersion=$versionToDeploy \
   --version $networkChartVersion \
   -n $namespace \
-  ${applicationName}-network \ 
+  ${applicationName}-network \
   $helmChartRepositoryName/$networkChartName 
 fi
 # Security to stop the process in case of faillure
