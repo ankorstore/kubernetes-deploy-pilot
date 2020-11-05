@@ -67,7 +67,7 @@ fi
 
 # force image pull policy in case of update but avoid it if no version installed 
 if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
-  imagePullPolicy="always"
+  imagePullPolicy="Always"
 fi
 
 # if new version is not deployed yet, do it
