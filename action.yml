@@ -12,7 +12,7 @@ inputs:
     description: 'the name of the application you want to deploy'
     required: true
   action:
-    description: 'Deploy action to apply (create|complete|cancel)'
+    description: 'Deploy action to apply (create|complete|update|cancel)'
     required: false
   namespace:
     description: 'Namespace of the application'

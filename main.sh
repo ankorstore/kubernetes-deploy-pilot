@@ -19,6 +19,7 @@ applicationChartName="web-application"
 networkChartName="web-network"
 safeActualVersion=$(echo $actualVersion | sed 's/\./-/g')
 safeVersionToDeploy=$(echo $versionToDeploy | sed 's/\./-/g')
+imagePullPolicy="IfNotPresent"
 
 ##############################################################
 ####################### FUNCTIONS ############################
@@ -38,7 +39,7 @@ function get_running_version {
 get_running_version;
 
 # Security to avoid upgrading in production version
-if [[ $actualVersion == $versionToDeploy ]]; then
+if [[ $actualVersion == $versionToDeploy ]] && [[ $action != "update" ]] ; then
   echo "The version you try to deploy is already in production."
   echo "Please update version number."
   exit 1;
@@ -64,20 +65,27 @@ fi
 ################# Application Deploy #########################
 ##############################################################
 
+# force image pull policy in case of update but avoid it if no version installed 
+if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
+  imagePullPolicy="always"
+fi
+
 # if new version is not deployed yet, do it
 if [[ $useApplicationVersionForImageTag == false ]]; then
-  helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
-  --set application.version=$versionToDeploy \
-  ${applicationName}-$versionToDeploy \
-  --version $applicationChartVersion \
-  $helmChartRepositoryName/$applicationChartName 
+    helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+    --set application.version=$versionToDeploy \
+    --set application.image.pullPolicy= $imagePullPolicy \
+    ${applicationName}-$versionToDeploy \
+    --version $applicationChartVersion \
+    $helmChartRepositoryName/$applicationChartName 
 else
-  helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
-  --set application.version=$versionToDeploy \
-  --set application.image.tag=$versionToDeploy \
-  ${applicationName}-$versionToDeploy \
-  --version $applicationChartVersion \
-  $helmChartRepositoryName/$applicationChartName  
+    helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+    --set application.version=$versionToDeploy \
+    --set application.image.tag=$versionToDeploy \
+    --set application.image.pullPolicy= $imagePullPolicy \
+    ${applicationName}-$versionToDeploy \
+    --version $applicationChartVersion \
+    $helmChartRepositoryName/$applicationChartName  
 fi
 # Security to stop the process in case of faillure
 if [[ $? != 0 ]]; then
