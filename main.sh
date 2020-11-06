@@ -71,31 +71,32 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
 fi
 
 # if new version is not deployed yet, do it
-if [[ $useApplicationVersionForImageTag == false ]]; then
-    helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
-    --set application.version=$versionToDeploy \
-    --set application.image.pullPolicy=$imagePullPolicy \
-    --version $applicationChartVersion \
-    -n $namespace \
-    ${applicationName}-$versionToDeploy \
-    $helmChartRepositoryName/$applicationChartName 
-else
-    helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
-    --set application.version=$versionToDeploy \
-    --set application.image.tag=$versionToDeploy \
-    --set application.image.pullPolicy=$imagePullPolicy \
-    --version $applicationChartVersion \
-    -n $namespace \
-    ${applicationName}-$versionToDeploy \
-    $helmChartRepositoryName/$applicationChartName  
+if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+  if [[ $useApplicationVersionForImageTag == false ]]; then
+      helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+      --set application.version=$versionToDeploy \
+      --set application.image.pullPolicy=$imagePullPolicy \
+      --version $applicationChartVersion \
+      -n $namespace \
+      ${applicationName}-$versionToDeploy \
+      $helmChartRepositoryName/$applicationChartName 
+  else
+      helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+      --set application.version=$versionToDeploy \
+      --set application.image.tag=$versionToDeploy \
+      --set application.image.pullPolicy=$imagePullPolicy \
+      --version $applicationChartVersion \
+      -n $namespace \
+      ${applicationName}-$versionToDeploy \
+      $helmChartRepositoryName/$applicationChartName  
+  fi
+  # Security to stop the process in case of faillure
+  if [[ $? != 0 ]]; then
+    echo "Fail to deploy application with code : $?"
+    echo "Deploy canceled"
+    exit 1;
+  fi
 fi
-# Security to stop the process in case of faillure
-if [[ $? != 0 ]]; then
-  echo "Fail to deploy application with code : $?"
-  echo "Deploy canceled"
-  exit 1;
-fi
-
 # force roll out to be sure to have the last version 
 if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
   kubectl rollout restart -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy
