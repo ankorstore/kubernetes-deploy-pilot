@@ -245,6 +245,9 @@ if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
   --set deploy.complete=true \
   --set deploy.newVersion=$versionToDeploy \
+  --set github.id=$githubId \
+  --set github.path=$githubPath \
+  --set github.url=$githubUrl \
   --version $networkChartVersion \
   -n $namespace \
   ${applicationName}-network \
@@ -252,6 +255,9 @@ if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
 elif [[ $action == "cancel" ]]; then
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
   --set deploy.complete=true  \
+  --set github.id=$githubId \
+  --set github.path=$githubPath \
+  --set github.url=$githubUrl \
   --set deploy.newVersion=$actualVersion \
   ${applicationName}-network \
   -n $namespace \
@@ -260,6 +266,9 @@ elif [[ $action == "cancel" ]]; then
 else
   helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
   --set deploy.complete=false \
+  --set github.id=$githubId \
+  --set github.path=$githubPath \
+  --set github.url=$githubUrl \
   --set deploy.runningVersion=$actualVersion \
   --set deploy.newVersion=$versionToDeploy \
   --version $networkChartVersion \
