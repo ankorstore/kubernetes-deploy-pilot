@@ -41,15 +41,15 @@ inputs:
   githubId:
     description: 'Application github repo id'
     required: false
-    default: ""
+    default: "0"
   githubPath:
     description: 'Application github repo path'
     required: false
-    default: ""
+    default: "/"
   githubUrl:
     description: 'Application github repo url'
     required: false
-    default: ""
+    default: "https://github.com"
 outputs:
   new-version: 
     description: "Return the new version number deployed"
@@ -64,7 +64,8 @@ runs:
       env: 
         BASE_WORKING_PATH: "${{ github.workspace }}"
       run: |
-        ${{ github.action_path }}/main.sh -t \
+        ${{ github.action_path }}/main.sh \
+        --application-image-tag="${{ inputs.useApplicationVersionForImageTag }}" \
         --action="${{ inputs.action }}" \
         --namespace="${{ inputs.namespace }}" \
         --version-deploy="${{ inputs.version-to-deploy }}" \

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # exemple usage : 
-# ./main.sh -t \
+# ./main.sh \
+# --application-image-tag="true" \
 # --action="update" \
 # --namespace="production" \
 # --version-deploy="1.2.3" \
@@ -21,7 +22,7 @@
 versionToDeploy="" # => --version-deploy
 namespace="" # => --namespace
 action="" # => --action
-useApplicationVersionForImageTag=false # => -t
+useApplicationVersionForImageTag="false" # => -t
 applicationValuePath="" # => --app-value-path
 networkValuePath="" # => --network-value-path
 applicationChartVersion="" # => --app-chart-version
@@ -39,7 +40,7 @@ while test $# -gt 0; do
       echo " "
       echo "options:"
       echo "-h, --help                                    Show brief help"
-      echo "-t=true|false                                 Use application version for docker image tag"
+      echo "--application-image-tag=true|false  Use application version for docker image tag"
       echo "--action=create|complete|update|cancel        Specify an action to apply"
       echo "--version-deploy=VERSIONTODEPLOY              Give the version to deploy"
       echo "--namespace=production|staging                Target namespace"
@@ -52,8 +53,8 @@ while test $# -gt 0; do
       echo "--github-url=GITHUBURL                        Github repo URL"
       exit 0
       ;;
-    -t)
-      useApplicationVersionForImageTag=true
+    --application-image-tag)
+      useApplicationVersionForImageTag=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --github-id*)
