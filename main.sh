@@ -53,7 +53,7 @@ while test $# -gt 0; do
       echo "--github-url=GITHUBURL                        Github repo URL"
       exit 0
       ;;
-    --application-image-tag)
+    --application-image-tag*)
       useApplicationVersionForImageTag=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
