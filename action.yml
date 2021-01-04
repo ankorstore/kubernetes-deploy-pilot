@@ -38,15 +38,15 @@ inputs:
     description: 'Version to use for network chart'
     required: false
     default: "latest"
-  githubId:
+  github-id:
     description: 'Application github repo id'
     required: false
     default: "0"
-  githubPath:
+  github-path:
     description: 'Application github repo path'
     required: false
     default: "/"
-  githubUrl:
+  github-url:
     description: 'Application github repo url'
     required: false
     default: "https://github.com"
@@ -73,9 +73,9 @@ runs:
         --network-value-path="${{ inputs.networkValuePath }}" \
         --app-chart-version="${{ inputs.ApplicationChartVersion }}" \
         --network-chart-version="${{ inputs.networkChartVersion }}" \
-        --github-id="${{ inputs.githubId }}" \
-        --github-path="${{ inputs.githubPath }}" \
-        --github-url="${{ inputs.githubUrl }}" \
+        --github-id="${{ inputs.github-id }}" \
+        --github-path="${{ inputs.github-path }}" \
+        --github-url="${{ inputs.github-url }}" \
         ${{ inputs.application-name }}
       shell: bash
     
