@@ -8,7 +8,7 @@ jobs:
     name: "Tagged Release"
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "marvinpinto/action-automatic-releases@59093c32a13352eefd5e1c9c23698dec2473318e"
+      - uses: "marvinpinto/action-automatic-releases@8cec54fd76f4690a8f4859843820a98cb0b6bd9b"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
