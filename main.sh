@@ -1,23 +1,136 @@
 #!/bin/bash
 
+# exemple usage : 
+# ./main.sh -t \
+# --action="update" \
+# --namespace="production" \
+# --version-deploy="1.2.3" \
+# --app-value-path="application/value.yml" \
+# --network-value-path="network/value.yml" \
+# --app-chart-version="1.0.1" \
+# --network-chart-version="1.0.0" \
+# --github-id="zefz848ezfze8e" \
+# --github-path="cheerz/fotom" \
+# --github-url="https://github.com/cheerz/fotom" \
+# fotom
+
+##############################################################
+####################### ARGUMENTS ############################
+##############################################################
+
+versionToDeploy="" # => --version-deploy
+namespace="" # => --namespace
+action="" # => --action
+useApplicationVersionForImageTag=false # => -t
+applicationValuePath="" # => --app-value-path
+networkValuePath="" # => --network-value-path
+applicationChartVersion="" # => --app-chart-version
+networkChartVersion="" # => --network-chart-version
+githubId="" # => --github-id
+githubPath="" # => --github-path
+githubUrl="" # => --github-url
+
+while test $# -gt 0; do
+  case "$1" in
+    -h|--help)
+      echo "Kubernetes deploy pilot - Generate a deploy"
+      echo " "
+      echo "./main.sh [options] applicationName"
+      echo " "
+      echo "options:"
+      echo "-h, --help                                    Show brief help"
+      echo "-t=true|false                                 Use application version for docker image tag"
+      echo "--action=create|complete|update|cancel        Specify an action to apply"
+      echo "--version-deploy=VERSIONTODEPLOY              Give the version to deploy"
+      echo "--namespace=production|staging                Target namespace"
+      echo "--app-value-path=APPVALUEPATH                 Value file path for application"
+      echo "--network-value-path=NETWORKVALUEPATH         Value file path for network"
+      echo "--app-chart-version=APPCHARTVERSION           Version to use for application chart"
+      echo "--network-chart-version=NETWORKCHARTVERSION   Version to use for network chart"
+      echo "--github-id=GITHUBID                          Github repo ID"
+      echo "--github-path=GITHUBPATH                      Github repo PATH"
+      echo "--github-url=GITHUBURL                        Github repo URL"
+      exit 0
+      ;;
+    -t)
+      useApplicationVersionForImageTag=true
+      shift
+      ;;
+    --github-id*)
+      githubId=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --github-path*)
+      githubPath=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --github-url*)
+      githubUrl=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --app-value-path*)
+      applicationValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --network-value-path*)
+      networkValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --app-chart-version*)
+      applicationChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --network-chart-version*)
+      networkChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --action*)
+      action=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --version-deploy*)
+      versionToDeploy=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --namespace*)
+      namespace=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 ##############################################################
 ####################### VARIABLE #############################
 ##############################################################
-versionToDeploy=$1
-applicationName=$2
-namespace=$3
-action=$4
-useApplicationVersionForImageTag=$5
-applicationValuePath=$6
-networkValuePath=$7
-applicationChartVersion=$8
-networkChartVersion=$9
+
+applicationName=$1
 actualVersion="v0.0.0"
 helmChartRepositoryName="cheerz-registry"
 helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
 applicationChartName="web-application"
 networkChartName="web-network"
 imagePullPolicy="IfNotPresent"
+
+##############################################################
+########################## DEBUG #############################
+##############################################################
+# echo "applicationName => $applicationName"
+# echo "versionToDeploy => $versionToDeploy"
+# echo "namespace => $namespace"
+# echo "action => $action"
+# echo "useApplicationVersionForImageTag => $useApplicationVersionForImageTag"
+# echo "applicationValuePath => $applicationValuePath"
+# echo "networkValuePath => $networkValuePath"
+# echo "applicationChartVersion => $applicationChartVersion"
+# echo "networkChartVersion => $networkChartVersion"
+# echo "githubId => $githubId"
+# echo "githubPath => $githubPath"
+# echo "githubUrl => $githubUrl"
+
+# exit 0
 
 ##############################################################
 ####################### FUNCTIONS ############################

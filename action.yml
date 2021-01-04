@@ -31,11 +31,23 @@ inputs:
     required: false
     default: "false" 
   ApplicationChartVersion:
-    description: 'Do we use the new application version to set the docker image tag'
+    description: 'Version to use for application chart'
     required: false
     default: "latest"
   networkChartVersion:
-    description: 'Do we use the new application version to set the docker image tag'
+    description: 'Version to use for network chart'
+    required: false
+    default: "latest"
+  githubId:
+    description: 'Application github repo id'
+    required: false
+    default: "latest"
+  githubPath:
+    description: 'Application github repo path'
+    required: false
+    default: "latest"
+  githubUrl:
+    description: 'Application github repo url'
     required: false
     default: "latest"
 outputs:
@@ -52,15 +64,17 @@ runs:
       env: 
         BASE_WORKING_PATH: "${{ github.workspace }}"
       run: |
-        ${{ github.action_path }}/main.sh \
-        ${{ inputs.version-to-deploy }} \
-        ${{ inputs.application-name }} \
-        ${{ inputs.namespace }} \
-        ${{ inputs.action }} \
-        ${{ inputs.useApplicationVersionForImageTag }} \
-        ${{ inputs.applicationValuePath }} \
-        ${{ inputs.networkValuePath }} \
-        ${{ inputs.ApplicationChartVersion }} \
-        ${{ inputs.networkChartVersion }}
+        ${{ github.action_path }}/main.sh -t \
+        --action="${{ inputs.action }}" \
+        --namespace="${{ inputs.namespace }}" \
+        --version-deploy="${{ inputs.version-to-deploy }}" \
+        --app-value-path="${{ inputs.applicationValuePath }}" \
+        --network-value-path="${{ inputs.networkValuePath }}" \
+        --app-chart-version="${{ inputs.ApplicationChartVersion }}" \
+        --network-chart-version="${{ inputs.networkChartVersion }}" \
+        --github-id="${{ inputs.githubId }}" \
+        --github-path="${{ inputs.githubPath }}" \
+        --github-url="${{ inputs.githubUrl }}" \
+        ${{ inputs.application-name }}
       shell: bash
     
