@@ -41,15 +41,15 @@ inputs:
   githubId:
     description: 'Application github repo id'
     required: false
-    default: "latest"
+    default: ""
   githubPath:
     description: 'Application github repo path'
     required: false
-    default: "latest"
+    default: ""
   githubUrl:
     description: 'Application github repo url'
     required: false
-    default: "latest"
+    default: ""
 outputs:
   new-version: 
     description: "Return the new version number deployed"
