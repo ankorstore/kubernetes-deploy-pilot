@@ -8,8 +8,10 @@
 # --version-deploy="1.2.3" \
 # --app-value-path="application/value.yml" \
 # --network-value-path="network/value.yml" \
+# --worker-value-path="worker/value.yml" \
 # --app-chart-version="1.0.1" \
 # --network-chart-version="1.0.0" \
+# --worker-chart-version="1.0.0" \
 # --github-id="zefz848ezfze8e" \
 # --github-path="cheerz/fotom" \
 # --github-url="https://github.com/cheerz/fotom" \
@@ -25,8 +27,10 @@ action="" # => --action
 useApplicationVersionForImageTag="false" # => -t
 applicationValuePath="" # => --app-value-path
 networkValuePath="" # => --network-value-path
+workerValuePath="" # => --worker-value-path
 applicationChartVersion="" # => --app-chart-version
 networkChartVersion="" # => --network-chart-version
+workerChartVersion="" # => --worker-chart-version
 githubId="" # => --github-id
 githubPath="" # => --github-path
 githubUrl="" # => --github-url
@@ -46,8 +50,10 @@ while test $# -gt 0; do
       echo "--namespace=production|staging                Target namespace"
       echo "--app-value-path=APPVALUEPATH                 Value file path for application"
       echo "--network-value-path=NETWORKVALUEPATH         Value file path for network"
+      echo "--worker-value-path=>WORKERVALUEPATH          Value file path for worker"
       echo "--app-chart-version=APPCHARTVERSION           Version to use for application chart"
       echo "--network-chart-version=NETWORKCHARTVERSION   Version to use for network chart"
+      echo "--worker-chart-version=WORKERCHARTVERSION     Version to use for worker chart"
       echo "--github-id=GITHUBID                          Github repo ID"
       echo "--github-path=GITHUBPATH                      Github repo PATH"
       echo "--github-url=GITHUBURL                        Github repo URL"
@@ -77,12 +83,20 @@ while test $# -gt 0; do
       networkValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
+    --worker-value-path*)
+      workerValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
     --app-chart-version*)
       applicationChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --network-chart-version*)
       networkChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --worker-chart-version*)
+      workerChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --action*)
@@ -113,6 +127,7 @@ helmChartRepositoryName="cheerz-registry"
 helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
 applicationChartName="web-application"
 networkChartName="web-network"
+workerChartName="worker-application"
 imagePullPolicy="IfNotPresent"
 
 ##############################################################
@@ -173,6 +188,9 @@ if [[ $applicationChartVersion == "latest" ]]; then
 fi
 if [[ $networkChartVersion == "latest" ]]; then
   networkChartVersion=$(helm show chart $helmChartRepositoryName/$networkChartName | grep "version:" | awk '{ print $2}')
+fi
+if [[ $workerChartVersion == "latest" ]]; then
+  workerChartVersion=$(helm show chart $helmChartRepositoryName/$workerChartName | grep "version:" | awk '{ print $2}')
 fi
 
 ##############################################################
@@ -282,6 +300,34 @@ if [[ $? != 0 ]]; then
   echo "Fail to deploy Network with code : $?"
   echo "Deploy canceled"
   exit 1;
+fi
+
+##############################################################
+############### worker deploy and update ####################
+##############################################################
+
+# Deploy the worker part
+if [[ $workerValuePath != "" ]]; then
+  echo "WorkerValuePath not empty so we deploy it"
+  helm upgrade --install -f $BASE_WORKING_PATH/$workerValuePath \
+  --set deploy.complete=true \
+  --set deploy.newVersion=$versionToDeploy \
+  --set github.id=$githubId \
+  --set github.path=$githubPath \
+  --set github.url=$githubUrl \
+  --version $workerChartVersion \
+  -n $namespace \
+  ${applicationName}-worker \
+  $helmChartRepositoryName/$workerChartName 
+
+  # Security to stop the process in case of faillure
+  if [[ $? != 0 ]]; then
+    echo "Fail to deploy worker with code : $?"
+    echo "Deploy canceled"
+    exit 1;
+  fi
+  else
+    echo "WorkerValuePath empty so we ignore it"
 fi
 
 ##############################################################
