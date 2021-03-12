@@ -185,12 +185,15 @@ helm repo update
 # convert latest version name in the last avaible version on repo
 if [[ $applicationChartVersion == "latest" ]]; then
   applicationChartVersion=$(helm show chart $helmChartRepositoryName/$applicationChartName | grep "version:" | awk '{ print $2}')
+  echo "Latest application chart version is $applicationChartVersion"
 fi
 if [[ $networkChartVersion == "latest" ]]; then
   networkChartVersion=$(helm show chart $helmChartRepositoryName/$networkChartName | grep "version:" | awk '{ print $2}')
+  echo "Latest network chart version is $networkChartVersion"
 fi
 if [[ $workerChartVersion == "latest" ]]; then
   workerChartVersion=$(helm show chart $helmChartRepositoryName/$workerChartName | grep "version:" | awk '{ print $2}')
+  echo "Latest worker chart version is $workerChartVersion"
 fi
 
 ##############################################################
