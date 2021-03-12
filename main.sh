@@ -314,7 +314,7 @@ if [[ $workerValuePath != "" ]]; then
   echo "WorkerValuePath not empty so we deploy it"
   helm upgrade --install -f $BASE_WORKING_PATH/$workerValuePath \
   --set deploy.complete=true \
-  --set deploy.newVersion=$versionToDeploy \
+  --set worker.version=$versionToDeploy \
   --set github.id=$githubId \
   --set github.path=$githubPath \
   --set github.url=$githubUrl \
