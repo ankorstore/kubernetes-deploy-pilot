@@ -28,6 +28,7 @@ useApplicationVersionForImageTag="false" # => -t
 applicationValuePath="" # => --app-value-path
 networkValuePath="" # => --network-value-path
 workerValuePath="" # => --worker-value-path
+commonValuePath="" # => --common-value-path
 applicationChartVersion="" # => --app-chart-version
 networkChartVersion="" # => --network-chart-version
 workerChartVersion="" # => --worker-chart-version
@@ -51,6 +52,7 @@ while test $# -gt 0; do
       echo "--app-value-path=APPVALUEPATH                 Value file path for application"
       echo "--network-value-path=NETWORKVALUEPATH         Value file path for network"
       echo "--worker-value-path=>WORKERVALUEPATH          Value file path for worker"
+      echo "--common-value-path=>COMMONVALUEPATH          Common value file path"
       echo "--app-chart-version=APPCHARTVERSION           Version to use for application chart"
       echo "--network-chart-version=NETWORKCHARTVERSION   Version to use for network chart"
       echo "--worker-chart-version=WORKERCHARTVERSION     Version to use for worker chart"
@@ -85,6 +87,10 @@ while test $# -gt 0; do
       ;;
     --worker-value-path*)
       workerValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --common-value-path*)
+      commonValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --app-chart-version*)
@@ -208,7 +214,8 @@ fi
 # if new version is not deployed yet, do it
 if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   if [[ $useApplicationVersionForImageTag == false ]]; then
-      helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+      helm upgrade --install \
+      -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
       --set application.version=$versionToDeploy \
       --set application.image.pullPolicy=$imagePullPolicy \
       --version $applicationChartVersion \
@@ -216,7 +223,8 @@ if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
       ${applicationName}-$versionToDeploy \
       $helmChartRepositoryName/$applicationChartName 
   else
-      helm upgrade --install -f $BASE_WORKING_PATH/$applicationValuePath \
+      helm upgrade --install \
+      -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
       --set application.version=$versionToDeploy \
       --set application.image.tag=$versionToDeploy \
       --set application.image.pullPolicy=$imagePullPolicy \
@@ -264,7 +272,8 @@ fi
 
 # Deploy the network part
 if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-  helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  helm upgrade --install \
+  -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
   --set deploy.complete=true \
   --set deploy.newVersion=$versionToDeploy \
   --set github.id=$githubId \
@@ -275,7 +284,8 @@ if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   ${applicationName}-network \
   $helmChartRepositoryName/$networkChartName 
 elif [[ $action == "cancel" ]]; then
-  helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  helm upgrade --install \
+  -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
   --set deploy.complete=true  \
   --set github.id=$githubId \
   --set github.path=$githubPath \
@@ -286,7 +296,8 @@ elif [[ $action == "cancel" ]]; then
   --version $networkChartVersion \
   $helmChartRepositoryName/$networkChartName 
 else
-  helm upgrade --install -f $BASE_WORKING_PATH/$networkValuePath \
+  helm upgrade --install \
+  -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
   --set deploy.complete=false \
   --set github.id=$githubId \
   --set github.path=$githubPath \
@@ -312,7 +323,8 @@ fi
 # Deploy the worker part
 if [[ $workerValuePath != "" ]]; then
   echo "WorkerValuePath not empty so we deploy it"
-  helm upgrade --install -f $BASE_WORKING_PATH/$workerValuePath \
+  helm upgrade --install \
+  -f "$BASE_WORKING_PATH/$workerValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
   --set deploy.complete=true \
   --set worker.version=$versionToDeploy \
   --set github.id=$githubId \
@@ -329,8 +341,9 @@ if [[ $workerValuePath != "" ]]; then
     echo "Deploy canceled"
     exit 1;
   fi
-  else
-    echo "WorkerValuePath empty so we ignore it"
+
+else
+  echo "WorkerValuePath empty so we ignore it"
 fi
 
 ##############################################################
@@ -344,7 +357,7 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]];
     # helm delete -n $namespace ${applicationName}-${actualVersion}
     # instead of deleting old application we set min replicas to 0 and will decrease progressivly
     helm upgrade \
-    -f $BASE_WORKING_PATH/$applicationValuePath \
+    -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
     --set application.version=$actualVersion \
     --set application.image.tag=$actualVersion \
     --set autoscaling.minReplicas=1 \
@@ -352,6 +365,7 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]];
     -n $namespace \
     ${applicationName}-$actualVersion \
     $helmChartRepositoryName/$applicationChartName 
+  # TODO to check not sure it work well
   elif [[ $action == "cancel" ]]; then
     helm delete -n $namespace ${applicationName}-${versionToDeploy}
   fi
@@ -367,10 +381,13 @@ if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $acti
   for release in $listRelease
   do
     if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]]; then
-      helm delete -n $namespace $release
+      helm delete --purge -n $namespace $release
     fi
   done
 fi
+
+# Delete useless empty RS 
+kubectl -n $namespace delete rs $(kubectl get rs --no-headers -n $namespace -l "app.kubernetes.io/instance=${applicationName}-${versionToDeploy}" | awk '{if ($2 + $3 + $4 == 0) print $1}')
 
 
 ##############################################################
