@@ -28,10 +28,12 @@ useApplicationVersionForImageTag="false" # => -t
 applicationValuePath="" # => --app-value-path
 networkValuePath="" # => --network-value-path
 workerValuePath="" # => --worker-value-path
+cronJobsValuePath="" # => --cron-jobs-value-path
 commonValuePath="" # => --common-value-path
 applicationChartVersion="" # => --app-chart-version
 networkChartVersion="" # => --network-chart-version
 workerChartVersion="" # => --worker-chart-version
+cronJobsChartVersion="" # => --cron-jobs-chart-version
 githubId="" # => --github-id
 githubPath="" # => --github-path
 githubUrl="" # => --github-url
@@ -45,17 +47,19 @@ while test $# -gt 0; do
       echo " "
       echo "options:"
       echo "-h, --help                                    Show brief help"
-      echo "--application-image-tag=true|false  Use application version for docker image tag"
+      echo "--application-image-tag=true|false            Use application version for docker image tag"
       echo "--action=create|complete|update|cancel        Specify an action to apply"
       echo "--version-deploy=VERSIONTODEPLOY              Give the version to deploy"
       echo "--namespace=production|staging                Target namespace"
       echo "--app-value-path=APPVALUEPATH                 Value file path for application"
       echo "--network-value-path=NETWORKVALUEPATH         Value file path for network"
       echo "--worker-value-path=>WORKERVALUEPATH          Value file path for worker"
+      echo "--cron-jobs-value-path=>WORKERVALUEPATH       Value file path for cron jobs"
       echo "--common-value-path=>COMMONVALUEPATH          Common value file path"
       echo "--app-chart-version=APPCHARTVERSION           Version to use for application chart"
       echo "--network-chart-version=NETWORKCHARTVERSION   Version to use for network chart"
       echo "--worker-chart-version=WORKERCHARTVERSION     Version to use for worker chart"
+      echo "--cron-jobs-chart-version=WORKERCHARTVERSION  Version to use for cron jobs chart"
       echo "--github-id=GITHUBID                          Github repo ID"
       echo "--github-path=GITHUBPATH                      Github repo PATH"
       echo "--github-url=GITHUBURL                        Github repo URL"
@@ -89,6 +93,10 @@ while test $# -gt 0; do
       workerValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
+    --cron-jobs-value-path*)
+      cronJobsValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
     --common-value-path*)
       commonValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
@@ -103,6 +111,10 @@ while test $# -gt 0; do
       ;;
     --worker-chart-version*)
       workerChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --cron-jobs-chart-version*)
+      cronJobsChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --action*)
@@ -134,6 +146,7 @@ helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
 applicationChartName="web-application"
 networkChartName="web-network"
 workerChartName="worker-application"
+cronJobsChartName="cron-jobs"
 imagePullPolicy="IfNotPresent"
 
 ##############################################################
@@ -200,6 +213,10 @@ fi
 if [[ $workerChartVersion == "latest" ]]; then
   workerChartVersion=$(helm show chart $helmChartRepositoryName/$workerChartName | grep "version:" | awk '{ print $2}')
   echo "Latest worker chart version is $workerChartVersion"
+fi
+if [[ $cronJobsChartVersion == "latest" ]]; then
+  cronJobsChartVersion=$(helm show chart $helmChartRepositoryName/$cronJobsChartName | grep "version:" | awk '{ print $2}')
+  echo "Latest cron jobs chart version is $cronJobsChartVersion"
 fi
 
 ##############################################################
@@ -322,28 +339,66 @@ fi
 
 # Deploy the worker part
 if [[ $workerValuePath != "" ]]; then
-  echo "WorkerValuePath not empty so we deploy it"
-  helm upgrade --install \
-  -f "$BASE_WORKING_PATH/$workerValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-  --set deploy.complete=true \
-  --set worker.version=$versionToDeploy \
-  --set github.id=$githubId \
-  --set github.path=$githubPath \
-  --set github.url=$githubUrl \
-  --version $workerChartVersion \
-  -n $namespace \
-  ${applicationName}-worker \
-  $helmChartRepositoryName/$workerChartName 
-
-  # Security to stop the process in case of faillure
-  if [[ $? != 0 ]]; then
-    echo "Fail to deploy worker with code : $?"
-    echo "Deploy canceled"
-    exit 1;
+  echo "WorkerValuePath not empty so we check if we deploy it"
+  if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+    echo "It's a complete install or a new install, so we deploy worker"
+    helm upgrade --install \
+    -f "$BASE_WORKING_PATH/$workerValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    --set deploy.complete=true \
+    --set worker.version=$versionToDeploy \
+    --set github.id=$githubId \
+    --set github.path=$githubPath \
+    --set github.url=$githubUrl \
+    --version $workerChartVersion \
+    -n $namespace \
+    ${applicationName}-worker \
+    $helmChartRepositoryName/$workerChartName 
+    # Security to stop the process in case of faillure
+    if [[ $? != 0 ]]; then
+      echo "Fail to deploy worker with code : $?"
+      echo "Deploy canceled"
+      exit 1;
+    fi
+    echo "Worker deployed successfully"
+  else
+    echo "It's not a complete deploy so we don't deploy worker"
   fi
-
 else
   echo "WorkerValuePath empty so we ignore it"
+fi
+
+##############################################################
+############### cronjobs deploy and update ###################
+##############################################################
+
+# Deploy the worker part
+if [[ $cronJobsValuePath != "" ]]; then
+  echo "CronJobsValuePath not empty so we check if we deploy it"
+  if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+    echo "It's a complete install or a new install, so we deploy cron jobs"
+    helm upgrade --install \
+    -f "$BASE_WORKING_PATH/$cronJobsValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    --set deploy.complete=true \
+    --set worker.version=$versionToDeploy \
+    --set github.id=$githubId \
+    --set github.path=$githubPath \
+    --set github.url=$githubUrl \
+    --version $cronJobsChartVersion \
+    -n $namespace \
+    ${applicationName}-cron-jobs \
+    $helmChartRepositoryName/$cronJobsChartName 
+    # Security to stop the process in case of faillure
+    if [[ $? != 0 ]]; then
+      echo "Fail to deploy cron jobs with code : $?"
+      echo "Deploy canceled"
+      exit 1;
+    fi
+    echo "Cron jobs deployed successfully"
+  else
+    echo "It's not a complete deploy so we don't deploy cron jobs"
+  fi
+else
+  echo "CronJobsValuePath empty so we ignore it"
 fi
 
 ##############################################################
@@ -365,9 +420,8 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]];
     -n $namespace \
     ${applicationName}-$actualVersion \
     $helmChartRepositoryName/$applicationChartName 
-  # TODO to check not sure it work well
   elif [[ $action == "cancel" ]]; then
-    helm delete -n $namespace ${applicationName}-${versionToDeploy}
+    helm delete -n --purge $namespace ${applicationName}-${versionToDeploy}
   fi
 fi
 
