@@ -345,7 +345,7 @@ if [[ $workerValuePath != "" ]]; then
     helm upgrade --install \
     -f "$BASE_WORKING_PATH/$workerValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
     --set deploy.complete=true \
-    --set worker.version=$versionToDeploy \
+    --set application.version=$versionToDeploy \
     --set github.id=$githubId \
     --set github.path=$githubPath \
     --set github.url=$githubUrl \
@@ -379,7 +379,7 @@ if [[ $cronJobsValuePath != "" ]]; then
     helm upgrade --install \
     -f "$BASE_WORKING_PATH/$cronJobsValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
     --set deploy.complete=true \
-    --set worker.version=$versionToDeploy \
+    --set application.version=$versionToDeploy \
     --set github.id=$githubId \
     --set github.path=$githubPath \
     --set github.url=$githubUrl \
