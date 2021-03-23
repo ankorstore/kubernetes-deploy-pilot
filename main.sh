@@ -340,7 +340,7 @@ fi
 # Deploy the worker part
 if [[ $workerValuePath != "" ]]; then
   echo "WorkerValuePath not empty so we check if we deploy it"
-  if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+  if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     echo "It's a complete install or a new install, so we deploy worker"
     helm upgrade --install \
     -f "$BASE_WORKING_PATH/$workerValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
@@ -374,7 +374,7 @@ fi
 # Deploy the worker part
 if [[ $cronJobsValuePath != "" ]]; then
   echo "CronJobsValuePath not empty so we check if we deploy it"
-  if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+  if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     echo "It's a complete install or a new install, so we deploy cron jobs"
     helm upgrade --install \
     -f "$BASE_WORKING_PATH/$cronJobsValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
