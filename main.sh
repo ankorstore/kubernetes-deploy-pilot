@@ -211,7 +211,7 @@ if [[ $networkChartVersion == "latest" ]]; then
   echo "Latest network chart version is $networkChartVersion"
 fi
 if [[ $sidekiqChartVersion == "latest" ]]; then
-  sidekiqChartVersion=$(helm show chart $helmChartRepositoryName/$workerChartName | grep "version:" | awk '{ print $2}')
+  sidekiqChartVersion=$(helm show chart $helmChartRepositoryName/$sidekiqChartName | grep "version:" | awk '{ print $2}')
   echo "Latest worker chart version is $sidekiqChartVersion"
 fi
 if [[ $cronJobsChartVersion == "latest" ]]; then
@@ -352,7 +352,7 @@ if [[ $sidekiqValuePath != "" ]]; then
     --version $sidekiqChartVersion \
     -n $namespace \
     ${applicationName}-sidekiq \
-    $helmChartRepositoryName/$workerChartName 
+    $helmChartRepositoryName/$sidekiqChartName 
     # Security to stop the process in case of faillure
     if [[ $? != 0 ]]; then
       echo "Fail to deploy sidekiq with code : $?"
