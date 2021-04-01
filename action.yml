@@ -26,15 +26,15 @@ inputs:
     description: 'Path of network value file'
     required: false
     default: "manifest/network-value.yml" 
-  workerValuePath:
-    description: 'Path of worker value file'
+  sidekiqValuePath:
+    description: 'Path of sidekiq value file'
     required: false
     default: "" 
   cronJobsValuePath:
     description: 'Path of cron jobs value file'
     required: false
     default: ""
-  commonJobsValuePath:
+  commonValuePath:
     description: 'Path of common value file'
     required: false
     default: ""
@@ -50,8 +50,8 @@ inputs:
     description: 'Version to use for network chart'
     required: false
     default: "latest"
-  workerChartVersion:
-    description: 'Version to use for worker chart'
+  sidekiqChartVersion:
+    description: 'Version to use for sidekiq chart'
     required: false
     default: "latest"
   cronJobsChartVersion:
@@ -91,12 +91,12 @@ runs:
         --version-deploy="${{ inputs.version-to-deploy }}" \
         --app-value-path="${{ inputs.applicationValuePath }}" \
         --network-value-path="${{ inputs.networkValuePath }}" \
-        --worker-value-path="${{ inputs.workerValuePath }}" \
+        --sidekiq-value-path="${{ inputs.sidekiqValuePath }}" \
         --common-value-path="${{ inputs.commonValuePath }}" \
         --cron-jobs-value-path="${{ inputs.cronJobsValuePath }}" \
         --app-chart-version="${{ inputs.ApplicationChartVersion }}" \
         --network-chart-version="${{ inputs.networkChartVersion }}" \
-        --worker-chart-version="${{ inputs.workerChartVersion }}" \
+        --sidekiq-chart-version="${{ inputs.sidekiqChartVersion }}" \
         --cron-jobs-chart-version="${{ inputs.cronJobsChartVersion }}" \
         --github-id="${{ inputs.github-id }}" \
         --github-path="${{ inputs.github-path }}" \

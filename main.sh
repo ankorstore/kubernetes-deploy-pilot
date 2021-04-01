@@ -8,10 +8,10 @@
 # --version-deploy="1.2.3" \
 # --app-value-path="application/value.yml" \
 # --network-value-path="network/value.yml" \
-# --worker-value-path="worker/value.yml" \
+# --sidekiq-value-path="sidekiq/value.yml" \
 # --app-chart-version="1.0.1" \
 # --network-chart-version="1.0.0" \
-# --worker-chart-version="1.0.0" \
+# --sidekiq-chart-version="1.0.0" \
 # --github-id="zefz848ezfze8e" \
 # --github-path="cheerz/fotom" \
 # --github-url="https://github.com/cheerz/fotom" \
@@ -27,12 +27,12 @@ action="" # => --action
 useApplicationVersionForImageTag="false" # => -t
 applicationValuePath="" # => --app-value-path
 networkValuePath="" # => --network-value-path
-workerValuePath="" # => --worker-value-path
+sidekiqValuePath="" # => --sidekiq-value-path
 cronJobsValuePath="" # => --cron-jobs-value-path
 commonValuePath="" # => --common-value-path
 applicationChartVersion="" # => --app-chart-version
 networkChartVersion="" # => --network-chart-version
-workerChartVersion="" # => --worker-chart-version
+sidekiqChartVersion="" # => --sidekiq-chart-version
 cronJobsChartVersion="" # => --cron-jobs-chart-version
 githubId="" # => --github-id
 githubPath="" # => --github-path
@@ -53,12 +53,12 @@ while test $# -gt 0; do
       echo "--namespace=production|staging                  Target namespace"
       echo "--app-value-path=APPVALUEPATH                   Value file path for application"
       echo "--network-value-path=NETWORKVALUEPATH           Value file path for network"
-      echo "--worker-value-path=>WORKERVALUEPATH            Value file path for worker"
+      echo "--sidekiq-value-path=>SIDEKIQVALUEPATH            Value file path for sidekiq"
       echo "--cron-jobs-value-path=>CRONJOBSVALUEPATH       Value file path for cron jobs"
       echo "--common-value-path=>COMMONVALUEPATH            Common value file path"
       echo "--app-chart-version=APPCHARTVERSION             Version to use for application chart"
       echo "--network-chart-version=NETWORKCHARTVERSION     Version to use for network chart"
-      echo "--worker-chart-version=WORKERCHARTVERSION       Version to use for worker chart"
+      echo "--sidekiq-chart-version=SIDEKIQCHARTVERSION       Version to use for sidekiq chart"
       echo "--cron-jobs-chart-version=CRONJOBSCHARTVERSION  Version to use for cron jobs chart"
       echo "--github-id=GITHUBID                            Github repo ID"
       echo "--github-path=GITHUBPATH                        Github repo PATH"
@@ -89,8 +89,8 @@ while test $# -gt 0; do
       networkValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
-    --worker-value-path*)
-      workerValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
+    --sidekiq-value-path*)
+      sidekiqValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --cron-jobs-value-path*)
@@ -109,8 +109,8 @@ while test $# -gt 0; do
       networkChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
-    --worker-chart-version*)
-      workerChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
+    --sidekiq-chart-version*)
+      sidekiqChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --cron-jobs-chart-version*)
@@ -145,7 +145,7 @@ helmChartRepositoryName="cheerz-registry"
 helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
 applicationChartName="web-application"
 networkChartName="web-network"
-workerChartName="worker-application"
+sidekiqChartName="worker-application"
 cronJobsChartName="cron-jobs"
 imagePullPolicy="IfNotPresent"
 
@@ -210,9 +210,9 @@ if [[ $networkChartVersion == "latest" ]]; then
   networkChartVersion=$(helm show chart $helmChartRepositoryName/$networkChartName | grep "version:" | awk '{ print $2}')
   echo "Latest network chart version is $networkChartVersion"
 fi
-if [[ $workerChartVersion == "latest" ]]; then
-  workerChartVersion=$(helm show chart $helmChartRepositoryName/$workerChartName | grep "version:" | awk '{ print $2}')
-  echo "Latest worker chart version is $workerChartVersion"
+if [[ $sidekiqChartVersion == "latest" ]]; then
+  sidekiqChartVersion=$(helm show chart $helmChartRepositoryName/$workerChartName | grep "version:" | awk '{ print $2}')
+  echo "Latest worker chart version is $sidekiqChartVersion"
 fi
 if [[ $cronJobsChartVersion == "latest" ]]; then
   cronJobsChartVersion=$(helm show chart $helmChartRepositoryName/$cronJobsChartName | grep "version:" | awk '{ print $2}')
@@ -334,44 +334,44 @@ if [[ $? != 0 ]]; then
 fi
 
 ##############################################################
-############### worker deploy and update ####################
+############### sidekiq deploy and update ####################
 ##############################################################
 
-# Deploy the worker part
-if [[ $workerValuePath != "" ]]; then
-  echo "WorkerValuePath not empty so we check if we deploy it"
+# Deploy the sidekiq part
+if [[ $sidekiqValuePath != "" ]]; then
+  echo "sidekiqValuePath not empty so we check if we deploy it"
   if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-    echo "It's a complete install or a new install, so we deploy worker"
+    echo "It's a complete install or a new install, so we deploy sidekiq"
     helm upgrade --install \
-    -f "$BASE_WORKING_PATH/$workerValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    -f "$BASE_WORKING_PATH/$sidekiqValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
     --set deploy.complete=true \
     --set application.version=$versionToDeploy \
     --set github.id=$githubId \
     --set github.path=$githubPath \
     --set github.url=$githubUrl \
-    --version $workerChartVersion \
+    --version $sidekiqChartVersion \
     -n $namespace \
-    ${applicationName}-worker \
+    ${applicationName}-sidekiq \
     $helmChartRepositoryName/$workerChartName 
     # Security to stop the process in case of faillure
     if [[ $? != 0 ]]; then
-      echo "Fail to deploy worker with code : $?"
+      echo "Fail to deploy sidekiq with code : $?"
       echo "Deploy canceled"
       exit 1;
     fi
-    echo "Worker deployed successfully"
+    echo "sidekiq deployed successfully"
   else
-    echo "It's not a complete deploy so we don't deploy worker"
+    echo "It's not a complete deploy so we don't deploy sidekiq"
   fi
 else
-  echo "WorkerValuePath empty so we ignore it"
+  echo "sidekiqValuePath empty so we ignore it"
 fi
 
 ##############################################################
 ############### cronjobs deploy and update ###################
 ##############################################################
 
-# Deploy the worker part
+# Deploy the cronjob part
 if [[ $cronJobsValuePath != "" ]]; then
   echo "CronJobsValuePath not empty so we check if we deploy it"
   if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
