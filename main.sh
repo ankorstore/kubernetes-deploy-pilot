@@ -288,7 +288,7 @@ fi
 ##############################################################
 
 # Deploy the network part
-if [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
   helm upgrade --install \
   -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
   --set deploy.complete=true \
@@ -359,6 +359,10 @@ if [[ $sidekiqValuePath != "" ]]; then
       echo "Deploy canceled"
       exit 1;
     fi
+    # force roll out to be sure to have the last version 
+    if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
+      kubectl rollout restart -n $namespace deployment.apps/${applicationName}-sidekiq-$safeVersionToDeploy-deploy
+    fi
     echo "sidekiq deployed successfully"
   else
     echo "It's not a complete deploy so we don't deploy sidekiq"
@@ -374,7 +378,7 @@ fi
 # Deploy the cronjob part
 if [[ $cronJobsValuePath != "" ]]; then
   echo "CronJobsValuePath not empty so we check if we deploy it"
-  if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+  if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     echo "It's a complete install or a new install, so we deploy cron jobs"
     helm upgrade --install \
     -f "$BASE_WORKING_PATH/$cronJobsValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
