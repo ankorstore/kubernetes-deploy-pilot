@@ -341,11 +341,13 @@ fi
 if [[ $sidekiqValuePath != "" ]]; then
   echo "sidekiqValuePath not empty so we check if we deploy it"
   if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-    echo "It's a complete install or a new install, so we deploy sidekiq"
+    echo "It's a complete install or a new install, so we deploy sidekiq on version $versionToDeploy"
+    if [[ $useApplicationVersionForImageTag == false ]]; then
     helm upgrade --install \
     -f "$BASE_WORKING_PATH/$sidekiqValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
     --set deploy.complete=true \
     --set application.version=$versionToDeploy \
+    --set application.image.pullPolicy=$imagePullPolicy \
     --set github.id=$githubId \
     --set github.path=$githubPath \
     --set github.url=$githubUrl \
@@ -353,6 +355,21 @@ if [[ $sidekiqValuePath != "" ]]; then
     -n $namespace \
     ${applicationName}-sidekiq \
     $helmChartRepositoryName/$sidekiqChartName 
+    else
+      helm upgrade --install \
+      -f "$BASE_WORKING_PATH/$sidekiqValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+      --set deploy.complete=true \
+      --set application.version=$versionToDeploy \
+      --set application.image.tag=$versionToDeploy \
+      --set application.image.pullPolicy=$imagePullPolicy \
+      --set github.id=$githubId \
+      --set github.path=$githubPath \
+      --set github.url=$githubUrl \
+      --version $sidekiqChartVersion \
+      -n $namespace \
+      ${applicationName}-sidekiq \
+      $helmChartRepositoryName/$sidekiqChartName 
+    fi
     # Security to stop the process in case of faillure
     if [[ $? != 0 ]]; then
       echo "Fail to deploy sidekiq with code : $?"
@@ -425,7 +442,7 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]];
     ${applicationName}-$actualVersion \
     $helmChartRepositoryName/$applicationChartName 
   elif [[ $action == "cancel" ]]; then
-    helm delete -n --purge $namespace ${applicationName}-${versionToDeploy}
+    helm delete -n $namespace ${applicationName}-${versionToDeploy}
   fi
 fi
 
@@ -439,7 +456,7 @@ if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $acti
   for release in $listRelease
   do
     if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]]; then
-      helm delete --purge -n $namespace $release
+      helm delete -n $namespace $release
     fi
   done
 fi
