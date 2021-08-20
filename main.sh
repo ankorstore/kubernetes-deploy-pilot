@@ -233,7 +233,7 @@ if [[ $cronJobsChartVersion == "latest" ]]; then
 fi
 if [[ $pgChartVersion == "latest" ]]; then
   pgChartVersion=$(helm show chart $helmChartRepositoryName/$pgChartName | grep "version:" | awk '{ print $2}')
-  echo "Latest cron jobs chart version is $pgChartVersion"
+  echo "Latest postgresql chart version is $pgChartVersion"
 fi
 
 ##############################################################
