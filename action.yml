@@ -34,7 +34,7 @@ inputs:
     description: 'Path of cron jobs value file'
     required: false
     default: ""
-  pgValuePath:
+  postgresqlValuePath:
     description: 'Path of Postgres value file'
     required: false
     default: ""
@@ -62,7 +62,7 @@ inputs:
     description: 'Version to use for cron jobs chart'
     required: false
     default: "latest"
-  pgChartVersion:
+  postgresqlChartVersion:
     description: 'Version to use for postgres chart'
     required: false
     default: "latest"
@@ -102,12 +102,12 @@ runs:
         --sidekiq-value-path="${{ inputs.sidekiqValuePath }}" \
         --common-value-path="${{ inputs.commonValuePath }}" \
         --cron-jobs-value-path="${{ inputs.cronJobsValuePath }}" \
-        --pg-value-path="${{ inputs.pgValuePath }}" \
+        --postgresql-value-path="${{ inputs.postgresqlValuePath }}" \
         --app-chart-version="${{ inputs.ApplicationChartVersion }}" \
         --network-chart-version="${{ inputs.networkChartVersion }}" \
         --sidekiq-chart-version="${{ inputs.sidekiqChartVersion }}" \
         --cron-jobs-chart-version="${{ inputs.cronJobsChartVersion }}" \
-        --pg-chart-version="${{ inputs.pgChartVersion }}" \
+        --postgresql-chart-version="${{ inputs.postgresqlChartVersion }}" \
         --github-id="${{ inputs.github-id }}" \
         --github-path="${{ inputs.github-path }}" \
         --github-url="${{ inputs.github-url }}" \
