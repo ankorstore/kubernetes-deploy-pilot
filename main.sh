@@ -29,11 +29,13 @@ applicationValuePath="" # => --app-value-path
 networkValuePath="" # => --network-value-path
 sidekiqValuePath="" # => --sidekiq-value-path
 cronJobsValuePath="" # => --cron-jobs-value-path
+pgValuePath="" # => --pg-value-path
 commonValuePath="" # => --common-value-path
 applicationChartVersion="" # => --app-chart-version
 networkChartVersion="" # => --network-chart-version
 sidekiqChartVersion="" # => --sidekiq-chart-version
 cronJobsChartVersion="" # => --cron-jobs-chart-version
+pgChartVersion="" # => --pg-chart-version
 githubId="" # => --github-id
 githubPath="" # => --github-path
 githubUrl="" # => --github-url
@@ -53,13 +55,15 @@ while test $# -gt 0; do
       echo "--namespace=production|staging                  Target namespace"
       echo "--app-value-path=APPVALUEPATH                   Value file path for application"
       echo "--network-value-path=NETWORKVALUEPATH           Value file path for network"
-      echo "--sidekiq-value-path=>SIDEKIQVALUEPATH            Value file path for sidekiq"
+      echo "--sidekiq-value-path=>SIDEKIQVALUEPATH          Value file path for sidekiq"
       echo "--cron-jobs-value-path=>CRONJOBSVALUEPATH       Value file path for cron jobs"
+      echo "--pg-value-path=>PGVALUEPATH                    Value file path for postgresql"
       echo "--common-value-path=>COMMONVALUEPATH            Common value file path"
       echo "--app-chart-version=APPCHARTVERSION             Version to use for application chart"
       echo "--network-chart-version=NETWORKCHARTVERSION     Version to use for network chart"
-      echo "--sidekiq-chart-version=SIDEKIQCHARTVERSION       Version to use for sidekiq chart"
+      echo "--sidekiq-chart-version=SIDEKIQCHARTVERSION     Version to use for sidekiq chart"
       echo "--cron-jobs-chart-version=CRONJOBSCHARTVERSION  Version to use for cron jobs chart"
+      echo "--pg-chart-version=PGCHARTVERSION               Version to use for postgresql chart"
       echo "--github-id=GITHUBID                            Github repo ID"
       echo "--github-path=GITHUBPATH                        Github repo PATH"
       echo "--github-url=GITHUBURL                          Github repo URL"
@@ -97,6 +101,10 @@ while test $# -gt 0; do
       cronJobsValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
+    --pg-value-path*)
+      pgValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
     --common-value-path*)
       commonValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
@@ -115,6 +123,10 @@ while test $# -gt 0; do
       ;;
     --cron-jobs-chart-version*)
       cronJobsChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --pg-chart-version*)
+      pgChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --action*)
@@ -147,6 +159,7 @@ applicationChartName="web-application"
 networkChartName="web-network"
 sidekiqChartName="worker-application"
 cronJobsChartName="cron-jobs"
+pgChartName="postgresql"
 imagePullPolicy="IfNotPresent"
 
 ##############################################################
@@ -217,6 +230,10 @@ fi
 if [[ $cronJobsChartVersion == "latest" ]]; then
   cronJobsChartVersion=$(helm show chart $helmChartRepositoryName/$cronJobsChartName | grep "version:" | awk '{ print $2}')
   echo "Latest cron jobs chart version is $cronJobsChartVersion"
+fi
+if [[ $pgChartVersion == "latest" ]]; then
+  pgChartVersion=$(helm show chart $helmChartRepositoryName/$pgChartName | grep "version:" | awk '{ print $2}')
+  echo "Latest cron jobs chart version is $pgChartVersion"
 fi
 
 ##############################################################
@@ -420,6 +437,49 @@ if [[ $cronJobsValuePath != "" ]]; then
   fi
 else
   echo "CronJobsValuePath empty so we ignore it"
+fi
+
+##############################################################
+################## PostgreSQL Deploy #########################
+##############################################################
+
+# force image pull policy in case of update but avoid it if no version installed 
+if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
+  imagePullPolicy="Always"
+fi
+
+# if new version is not deployed yet, do it
+if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+  if [[ $useApplicationVersionForImageTag == false ]]; then
+      helm upgrade --install \
+      -f "$BASE_WORKING_PATH/$pgValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+      --set application.version=$versionToDeploy \
+      --set application.image.pullPolicy=$imagePullPolicy \
+      --version $pgChartVersion \
+      -n $namespace \
+      ${applicationName}-pg-$versionToDeploy \
+      $helmChartRepositoryName/$pgChartName
+  else
+      helm upgrade --install \
+      -f "$BASE_WORKING_PATH/$pgValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+      --set application.version=$versionToDeploy \
+      --set application.image.tag=$versionToDeploy \
+      --set application.image.pullPolicy=$imagePullPolicy \
+      --version $pgChartVersion \
+      -n $namespace \
+      ${applicationName}-pg-$versionToDeploy \
+      $helmChartRepositoryName/$pgChartName
+  fi
+  # Security to stop the process in case of faillure
+  if [[ $? != 0 ]]; then
+    echo "Fail to deploy application with code : $?"
+    echo "Deploy canceled"
+    exit 1;
+  fi
+fi
+# force roll out to be sure to have the last version 
+if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
+  kubectl rollout restart -n $namespace deployment.apps/${applicationName}-pg-$safeVersionToDeploy-deploy
 fi
 
 ##############################################################
