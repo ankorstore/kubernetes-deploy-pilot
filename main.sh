@@ -443,43 +443,30 @@ fi
 ################## PostgreSQL Deploy #########################
 ##############################################################
 
-# force image pull policy in case of update but avoid it if no version installed 
-if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
-  imagePullPolicy="Always"
-fi
-
-# if new version is not deployed yet, do it
-if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-  if [[ $useApplicationVersionForImageTag == false ]]; then
-      helm upgrade --install \
-      -f "$BASE_WORKING_PATH/$pgValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-      --set application.version=$versionToDeploy \
-      --set application.image.pullPolicy=$imagePullPolicy \
-      --version $pgChartVersion \
-      -n $namespace \
-      ${applicationName}-pg-$versionToDeploy \
-      $helmChartRepositoryName/$pgChartName
+# Deploy the Postgresql part
+if [[ $pgValuePath != "" ]]; then
+  echo "pgValuePath not empty so we check if we deploy it"
+  if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+    echo "It's a complete install or a new install, so we deploy postgresql"
+    helm upgrade --install \
+    -f "$BASE_WORKING_PATH/$pgValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    --set application.version=$versionToDeploy \
+    --version $pgChartVersion \
+    -n $namespace \
+    ${applicationName}-pg-$versionToDeploy \
+    $helmChartRepositoryName/$pgChartName 
+    # Security to stop the process in case of faillure
+    if [[ $? != 0 ]]; then
+      echo "Fail to deploy postgresql with code : $?"
+      echo "Deploy canceled"
+      exit 1;
+    fi
+    echo "postgresql deployed successfully"
   else
-      helm upgrade --install \
-      -f "$BASE_WORKING_PATH/$pgValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-      --set application.version=$versionToDeploy \
-      --set application.image.tag=$versionToDeploy \
-      --set application.image.pullPolicy=$imagePullPolicy \
-      --version $pgChartVersion \
-      -n $namespace \
-      ${applicationName}-pg-$versionToDeploy \
-      $helmChartRepositoryName/$pgChartName
+    echo "It's not a complete deploy so we don't deploy postgresql"
   fi
-  # Security to stop the process in case of faillure
-  if [[ $? != 0 ]]; then
-    echo "Fail to deploy application with code : $?"
-    echo "Deploy canceled"
-    exit 1;
-  fi
-fi
-# force roll out to be sure to have the last version 
-if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
-  kubectl rollout restart -n $namespace deployment.apps/${applicationName}-pg-$safeVersionToDeploy-deploy
+else
+  echo "pgValuePath empty so we ignore it"
 fi
 
 ##############################################################
