@@ -30,12 +30,14 @@ networkValuePath="" # => --network-value-path
 sidekiqValuePath="" # => --sidekiq-value-path
 cronJobsValuePath="" # => --cron-jobs-value-path
 postgresqlValuePath="" # => --postgresql-value-path
+redisValuePath="" # => --redis-value-path
 commonValuePath="" # => --common-value-path
 applicationChartVersion="" # => --app-chart-version
 networkChartVersion="" # => --network-chart-version
 sidekiqChartVersion="" # => --sidekiq-chart-version
 cronJobsChartVersion="" # => --cron-jobs-chart-version
 postgresqlChartVersion="" # => --postgresql-chart-version
+redisChartVersion="" # => --redis-chart-version
 githubId="" # => --github-id
 githubPath="" # => --github-path
 githubUrl="" # => --github-url
@@ -58,12 +60,14 @@ while test $# -gt 0; do
       echo "--sidekiq-value-path=>SIDEKIQVALUEPATH             Value file path for sidekiq"
       echo "--cron-jobs-value-path=>CRONJOBSVALUEPATH          Value file path for cron jobs"
       echo "--postgresql-value-path=>POSTGRESQLVALUEPATH       Value file path for postgresql"
+      echo "--redis-value-path=>REDISVALUEPATH                 Value file path for redis"
       echo "--common-value-path=>COMMONVALUEPATH               Common value file path"
       echo "--app-chart-version=APPCHARTVERSION                Version to use for application chart"
       echo "--network-chart-version=NETWORKCHARTVERSION        Version to use for network chart"
       echo "--sidekiq-chart-version=SIDEKIQCHARTVERSION        Version to use for sidekiq chart"
       echo "--cron-jobs-chart-version=CRONJOBSCHARTVERSION     Version to use for cron jobs chart"
       echo "--postgresql-chart-version=POSTGRESQLCHARTVERSION  Version to use for postgresql chart"
+      echo "--redis-chart-version=REDISCHARTVERSION            Version to use for redis chart"
       echo "--github-id=GITHUBID                               Github repo ID"
       echo "--github-path=GITHUBPATH                           Github repo PATH"
       echo "--github-url=GITHUBURL                             Github repo URL"
@@ -105,6 +109,10 @@ while test $# -gt 0; do
       postgresqlValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
+    --redis-value-path*)
+      redisValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
     --common-value-path*)
       commonValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
@@ -127,6 +135,10 @@ while test $# -gt 0; do
       ;;
     --postgresql-chart-version*)
       postgresqlChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --redis-chart-version*)
+      redisChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --action*)
@@ -160,6 +172,7 @@ networkChartName="web-network"
 sidekiqChartName="worker-application"
 cronJobsChartName="cron-jobs"
 postgresqlChartName="postgresql"
+redisChartName="redis"
 imagePullPolicy="IfNotPresent"
 
 ##############################################################
@@ -234,6 +247,10 @@ fi
 if [[ $postgresqlChartVersion == "latest" ]]; then
   postgresqlChartVersion=$(helm show chart $helmChartRepositoryName/$postgresqlChartName | grep "version:" | awk '{ print $2}')
   echo "Latest postgresql chart version is $postgresqlChartVersion"
+fi
+if [[ $redisChartVersion == "latest" ]]; then
+  redisChartVersion=$(helm show chart $helmChartRepositoryName/$redisChartName | grep "version:" | awk '{ print $2}')
+  echo "Latest redis chart version is $redisChartVersion"
 fi
 
 ##############################################################
@@ -467,6 +484,36 @@ if [[ $postgresqlValuePath != "" ]]; then
   fi
 else
   echo "postgresqlValuePath empty so we ignore it"
+fi
+
+##############################################################
+################## Redis Deploy #########################
+##############################################################
+
+# Deploy the redis part
+if [[ $redisValuePath != "" ]]; then
+  echo "redisValuePath not empty so we check if we deploy it"
+  if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+    echo "It's a complete install or a new install, so we deploy redis"
+    helm upgrade --install \
+    -f "$BASE_WORKING_PATH/$redisValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    --set application.version=$versionToDeploy \
+    --version $redisChartVersion \
+    -n $namespace \
+    ${applicationName}-redis-$versionToDeploy \
+    $helmChartRepositoryName/$redisChartName 
+    # Security to stop the process in case of faillure
+    if [[ $? != 0 ]]; then
+      echo "Fail to deploy redis with code : $?"
+      echo "Deploy canceled"
+      exit 1;
+    fi
+    echo "redis deployed successfully"
+  else
+    echo "It's not a complete deploy so we don't deploy redis"
+  fi
+else
+  echo "redisValuePath empty so we ignore it"
 fi
 
 ##############################################################

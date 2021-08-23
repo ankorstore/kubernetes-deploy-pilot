@@ -38,6 +38,10 @@ inputs:
     description: 'Path of Postgres value file'
     required: false
     default: ""
+  redisValuePath:
+    description: 'Path of redis value file'
+    required: false
+    default: ""
   commonValuePath:
     description: 'Path of common value file'
     required: false
@@ -64,6 +68,10 @@ inputs:
     default: "latest"
   postgresqlChartVersion:
     description: 'Version to use for postgres chart'
+    required: false
+    default: "latest"
+  redisChartVersion:
+    description: 'Version to use for redis chart'
     required: false
     default: "latest"
   github-id:
@@ -108,6 +116,7 @@ runs:
         --sidekiq-chart-version="${{ inputs.sidekiqChartVersion }}" \
         --cron-jobs-chart-version="${{ inputs.cronJobsChartVersion }}" \
         --postgresql-chart-version="${{ inputs.postgresqlChartVersion }}" \
+        --redis-chart-version="${{ inputs.redisChartVersion }}" \
         --github-id="${{ inputs.github-id }}" \
         --github-path="${{ inputs.github-path }}" \
         --github-url="${{ inputs.github-url }}" \
