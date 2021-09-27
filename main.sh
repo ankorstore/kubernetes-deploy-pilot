@@ -13,8 +13,8 @@
 # --network-chart-version="1.0.0" \
 # --sidekiq-chart-version="1.0.0" \
 # --github-id="zefz848ezfze8e" \
-# --github-path="cheerz/fotom" \
-# --github-url="https://github.com/cheerz/fotom" \
+# --github-path="ankorstore/ankorstore" \
+# --github-url="https://github.com/ankorstore/ankorstore" \
 # fotom
 
 ##############################################################
@@ -153,8 +153,8 @@ done
 
 applicationName=$1
 actualVersion="v0.0.0"
-helmChartRepositoryName="cheerz-registry"
-helmChartRepositoryAddress="http://charts.k8s.cheerz.net"
+helmChartRepositoryName="ankorstore-registry"
+helmChartRepositoryAddress="http://charts.tools.ankorstore.io/"
 applicationChartName="web-application"
 networkChartName="web-network"
 sidekiqChartName="worker-application"
