@@ -244,110 +244,113 @@ fi
 if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
   imagePullPolicy="Always"
 fi
-
-# if new version is not deployed yet, do it
-if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-  if [[ $useApplicationVersionForImageTag == false ]]; then
-      helm upgrade --install \
-      -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-      --set application.version=$versionToDeploy \
-      --set application.image.pullPolicy=$imagePullPolicy \
-      --version $applicationChartVersion \
-      -n $namespace \
-      ${applicationName}-$versionToDeploy \
-      $helmChartRepositoryName/$applicationChartName 
-  else
-      helm upgrade --install \
-      -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-      --set application.version=$versionToDeploy \
-      --set application.image.tag=$versionToDeploy \
-      --set application.image.pullPolicy=$imagePullPolicy \
-      --version $applicationChartVersion \
-      -n $namespace \
-      ${applicationName}-$versionToDeploy \
-      $helmChartRepositoryName/$applicationChartName  
-  fi
-  # Security to stop the process in case of faillure
-  if [[ $? != 0 ]]; then
-    echo "Fail to deploy application with code : $?"
-    echo "Deploy canceled"
-    exit 1;
-  fi
-fi
-# force roll out to be sure to have the last version 
-if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
-  kubectl rollout restart -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy
-fi
-
-##############################################################
-################### Deploy auto scaler #######################
-##############################################################
-
- # Auto scale new version to be ready for prod volume
-if [[ $action == "complete" ]] && [[ $actualVersion != "v0.0.0" ]]; then
-  # get replicas on running version
-  actualVersionReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeActualVersion-hpa -o template --template={{.status.currentReplicas}})
-  # get new version min replicas
-  VersionToDeployMinReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeVersionToDeploy-hpa -o template --template={{.spec.minReplicas}})
-  # check if valid int
-  if [[ "$actualVersionReplicas" == "$actualVersionReplicas" ]] && [[ "$VersionToDeployMinReplicas" == "$VersionToDeployMinReplicas" ]] 2>/dev/null
-  then
-    #security to avoid going under new version min replicas
-    if [[ $VersionToDeployMinReplicas > $actualVersionReplicas ]]; then
-      actualVersionReplicas=$VersionToDeployMinReplicas
+if [[ $applicationValuePath != "" ]]; then
+  # if new version is not deployed yet, do it
+  if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+    if [[ $useApplicationVersionForImageTag == false ]]; then
+        helm upgrade --install \
+        -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+        --set application.version=$versionToDeploy \
+        --set application.image.pullPolicy=$imagePullPolicy \
+        --version $applicationChartVersion \
+        -n $namespace \
+        ${applicationName}-$versionToDeploy \
+        $helmChartRepositoryName/$applicationChartName 
+    else
+        helm upgrade --install \
+        -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+        --set application.version=$versionToDeploy \
+        --set application.image.tag=$versionToDeploy \
+        --set application.image.pullPolicy=$imagePullPolicy \
+        --version $applicationChartVersion \
+        -n $namespace \
+        ${applicationName}-$versionToDeploy \
+        $helmChartRepositoryName/$applicationChartName  
     fi
-    kubectl scale deploy ${applicationName}-$safeVersionToDeploy-deploy -n $namespace --replicas=$actualVersionReplicas
+    # Security to stop the process in case of faillure
+    if [[ $? != 0 ]]; then
+      echo "Fail to deploy application with code : $?"
+      echo "Deploy canceled"
+      exit 1;
+    fi
+  fi
+
+  # force roll out to be sure to have the last version 
+  if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
+    kubectl rollout restart -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy
+  fi
+
+
+  ##############################################################
+  ################### Deploy auto scaler #######################
+  ##############################################################
+
+  # Auto scale new version to be ready for prod volume
+  if [[ $action == "complete" ]] && [[ $actualVersion != "v0.0.0" ]]; then
+    # get replicas on running version
+    actualVersionReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeActualVersion-hpa -o template --template={{.status.currentReplicas}})
+    # get new version min replicas
+    VersionToDeployMinReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeVersionToDeploy-hpa -o template --template={{.spec.minReplicas}})
+    # check if valid int
+    if [[ "$actualVersionReplicas" == "$actualVersionReplicas" ]] && [[ "$VersionToDeployMinReplicas" == "$VersionToDeployMinReplicas" ]] 2>/dev/null
+    then
+      #security to avoid going under new version min replicas
+      if [[ $VersionToDeployMinReplicas > $actualVersionReplicas ]]; then
+        actualVersionReplicas=$VersionToDeployMinReplicas
+      fi
+      kubectl scale deploy ${applicationName}-$safeVersionToDeploy-deploy -n $namespace --replicas=$actualVersionReplicas
+    fi
   fi
 fi
-
 ##############################################################
 ############### Network deploy and update ####################
 ##############################################################
-
-# Deploy the network part
-if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-  helm upgrade --install \
-  -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-  --set deploy.complete=true \
-  --set deploy.newVersion=$versionToDeploy \
-  --set github.id=$githubId \
-  --set github.path=$githubPath \
-  --set github.url=$githubUrl \
-  --version $networkChartVersion \
-  -n $namespace \
-  ${applicationName}-network \
-  $helmChartRepositoryName/$networkChartName 
-elif [[ $action == "cancel" ]]; then
-  helm upgrade --install \
-  -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-  --set deploy.complete=true  \
-  --set github.id=$githubId \
-  --set github.path=$githubPath \
-  --set github.url=$githubUrl \
-  --set deploy.newVersion=$actualVersion \
-  ${applicationName}-network \
-  -n $namespace \
-  --version $networkChartVersion \
-  $helmChartRepositoryName/$networkChartName 
-else
-  helm upgrade --install \
-  -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-  --set deploy.complete=false \
-  --set github.id=$githubId \
-  --set github.path=$githubPath \
-  --set github.url=$githubUrl \
-  --set deploy.runningVersion=$actualVersion \
-  --set deploy.newVersion=$versionToDeploy \
-  --version $networkChartVersion \
-  -n $namespace \
-  ${applicationName}-network \
-  $helmChartRepositoryName/$networkChartName 
-fi
-# Security to stop the process in case of faillure
-if [[ $? != 0 ]]; then
-  echo "Fail to deploy Network with code : $?"
-  echo "Deploy canceled"
-  exit 1;
+if [[ $networkValuePath != "" ]]; then
+  # Deploy the network part
+  if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+    helm upgrade --install \
+    -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    --set deploy.complete=true \
+    --set deploy.newVersion=$versionToDeploy \
+    --set github.id=$githubId \
+    --set github.path=$githubPath \
+    --set github.url=$githubUrl \
+    --version $networkChartVersion \
+    -n $namespace \
+    ${applicationName}-network \
+    $helmChartRepositoryName/$networkChartName 
+  elif [[ $action == "cancel" ]]; then
+    helm upgrade --install \
+    -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    --set deploy.complete=true  \
+    --set github.id=$githubId \
+    --set github.path=$githubPath \
+    --set github.url=$githubUrl \
+    --set deploy.newVersion=$actualVersion \
+    ${applicationName}-network \
+    -n $namespace \
+    --version $networkChartVersion \
+    $helmChartRepositoryName/$networkChartName 
+  else
+    helm upgrade --install \
+    -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    --set deploy.complete=false \
+    --set github.id=$githubId \
+    --set github.path=$githubPath \
+    --set github.url=$githubUrl \
+    --set deploy.runningVersion=$actualVersion \
+    --set deploy.newVersion=$versionToDeploy \
+    --version $networkChartVersion \
+    -n $namespace \
+    ${applicationName}-network \
+    $helmChartRepositoryName/$networkChartName 
+  fi
+  # Security to stop the process in case of faillure
+  if [[ $? != 0 ]]; then
+    echo "Fail to deploy Network with code : $?"
+    echo "Deploy canceled"
+    exit 1;
+  fi
 fi
 
 ##############################################################
@@ -472,24 +475,25 @@ fi
 ##############################################################
 ##################### Deploy smoother ########################
 ##############################################################
-
-# Soft old version cleaner
-if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]]; then
-  # delete old useless version
-  if [[ $action == "complete" ]]; then
-    # helm delete -n $namespace ${applicationName}-${actualVersion}
-    # instead of deleting old application we set min replicas to 0 and will decrease progressivly
-    helm upgrade \
-    -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
-    --set application.version=$actualVersion \
-    --set application.image.tag=$actualVersion \
-    --set autoscaling.minReplicas=1 \
-    --version $applicationChartVersion \
-    -n $namespace \
-    ${applicationName}-$actualVersion \
-    $helmChartRepositoryName/$applicationChartName 
-  elif [[ $action == "cancel" ]]; then
-    helm delete -n $namespace ${applicationName}-${versionToDeploy}
+if [[ $applicationValuePath != "" ]]; then
+  # Soft old version cleaner
+  if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]]; then
+    # delete old useless version
+    if [[ $action == "complete" ]]; then
+      # helm delete -n $namespace ${applicationName}-${actualVersion}
+      # instead of deleting old application we set min replicas to 0 and will decrease progressivly
+      helm upgrade \
+      -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+      --set application.version=$actualVersion \
+      --set application.image.tag=$actualVersion \
+      --set autoscaling.minReplicas=1 \
+      --version $applicationChartVersion \
+      -n $namespace \
+      ${applicationName}-$actualVersion \
+      $helmChartRepositoryName/$applicationChartName 
+    elif [[ $action == "cancel" ]]; then
+      helm delete -n $namespace ${applicationName}-${versionToDeploy}
+    fi
   fi
 fi
 
