@@ -67,7 +67,8 @@ if [[ $confirm != "y" ]] && [[ $confirm != "yes" ]]; then
 fi
 
 ## lets release
+git fetch --all --tags
 git tag -a $newVersion -m "$newVersion"
 git push --tags
 
-echo "Your release is in progress, you can follow progress here: https://github.com/ankorstore/docker-images/actions"
+echo "Your release is in progress, you can follow progress here: https://github.com/ankorstore/kubernetes-deploy-pilot/actions"
