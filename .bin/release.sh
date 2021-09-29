@@ -67,7 +67,7 @@ if [[ $confirm != "y" ]] && [[ $confirm != "yes" ]]; then
 fi
 
 ## lets release
-git fetch --all --tags
+git fetch -f --tags
 git tag -a $newVersion -m "$newVersion"
 git push --tags
 
