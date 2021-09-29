@@ -21,11 +21,11 @@ inputs:
   applicationValuePath:
     description: 'Path of application value file'
     required: false
-    default: "manifest/application-value.yml"
+    default: ""
   networkValuePath:
     description: 'Path of network value file'
     required: false
-    default: "manifest/network-value.yml" 
+    default: "" 
   workerValuePath:
     description: 'Path of worker value file'
     required: false
