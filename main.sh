@@ -415,7 +415,7 @@ fi
 # Deploy the cronjob part
 if [[ $cronJobsValuePath != "" ]]; then
   echo "CronJobsValuePath not empty so we check if we deploy it"
-  if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+  if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     echo "It's a complete install or a new install, so we deploy cron jobs"
     helm upgrade --install \
     -f "$BASE_WORKING_PATH/$cronJobsValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
