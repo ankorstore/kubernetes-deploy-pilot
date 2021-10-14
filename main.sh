@@ -249,7 +249,7 @@ if [[ $applicationValuePath != "" ]]; then
   if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     if [[ $useApplicationVersionForImageTag == false ]]; then
         helm upgrade --install \
-        -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+        -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
         --set application.version=$versionToDeploy \
         --set application.image.pullPolicy=$imagePullPolicy \
         --version $applicationChartVersion \
@@ -258,7 +258,7 @@ if [[ $applicationValuePath != "" ]]; then
         $helmChartRepositoryName/$applicationChartName 
     else
         helm upgrade --install \
-        -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+        -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
         --set application.version=$versionToDeploy \
         --set application.image.tag=$versionToDeploy \
         --set application.image.pullPolicy=$imagePullPolicy \
@@ -309,7 +309,7 @@ if [[ $networkValuePath != "" ]]; then
   # Deploy the network part
   if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     helm upgrade --install \
-    -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
     --set deploy.complete=true \
     --set deploy.newVersion=$versionToDeploy \
     --set github.id=$githubId \
@@ -321,7 +321,7 @@ if [[ $networkValuePath != "" ]]; then
     $helmChartRepositoryName/$networkChartName 
   elif [[ $action == "cancel" ]]; then
     helm upgrade --install \
-    -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
     --set deploy.complete=true  \
     --set github.id=$githubId \
     --set github.path=$githubPath \
@@ -333,7 +333,7 @@ if [[ $networkValuePath != "" ]]; then
     $helmChartRepositoryName/$networkChartName 
   else
     helm upgrade --install \
-    -f "$BASE_WORKING_PATH/$networkValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
     --set deploy.complete=false \
     --set github.id=$githubId \
     --set github.path=$githubPath \
@@ -364,7 +364,7 @@ if [[ $workerValuePath != "" ]]; then
     echo "It's a complete install or a new install, so we deploy worker on version $versionToDeploy"
     if [[ $useApplicationVersionForImageTag == false ]]; then
     helm upgrade --install \
-    -f "$BASE_WORKING_PATH/$workerValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$workerValuePath" \
     --set deploy.complete=true \
     --set application.version=$versionToDeploy \
     --set application.image.pullPolicy=$imagePullPolicy \
@@ -377,7 +377,7 @@ if [[ $workerValuePath != "" ]]; then
     $helmChartRepositoryName/$workerChartName 
     else
       helm upgrade --install \
-      -f "$BASE_WORKING_PATH/$workerValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+      -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$workerValuePath" \
       --set deploy.complete=true \
       --set application.version=$versionToDeploy \
       --set application.image.tag=$versionToDeploy \
@@ -418,7 +418,7 @@ if [[ $cronJobsValuePath != "" ]]; then
   if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     echo "It's a complete install or a new install, so we deploy cron jobs"
     helm upgrade --install \
-    -f "$BASE_WORKING_PATH/$cronJobsValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$cronJobsValuePath" \
     --set deploy.complete=true \
     --set application.version=$versionToDeploy \
     --set github.id=$githubId \
@@ -452,7 +452,7 @@ if [[ $postgresqlValuePath != "" ]]; then
   if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     echo "It's a complete install or a new install, so we deploy postgresql"
     helm upgrade --install \
-    -f "$BASE_WORKING_PATH/$postgresqlValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$postgresqlValuePath" \
     --set application.version=$versionToDeploy \
     --version $postgresqlChartVersion \
     -n $namespace \
@@ -483,7 +483,7 @@ if [[ $applicationValuePath != "" ]]; then
       # helm delete -n $namespace ${applicationName}-${actualVersion}
       # instead of deleting old application we set min replicas to 0 and will decrease progressivly
       helm upgrade \
-      -f "$BASE_WORKING_PATH/$applicationValuePath$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo ,$BASE_WORKING_PATH/$commonValuePath; fi)" \
+      -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
       --set application.version=$actualVersion \
       --set application.image.tag=$actualVersion \
       --set autoscaling.minReplicas=1 \
