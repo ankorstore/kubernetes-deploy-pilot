@@ -397,7 +397,7 @@ if [[ $workerValuePath != "" ]]; then
       exit 1;
     fi
     # force roll out to be sure to have the last version 
-    if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
+    if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]] ; then
       kubectl rollout restart -n $namespace deployment.apps/${applicationName}-worker-$safeVersionToDeploy-deploy
     fi
     echo "worker deployed successfully"
