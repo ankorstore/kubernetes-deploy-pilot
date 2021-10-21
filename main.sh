@@ -154,7 +154,7 @@ done
 applicationName=$1
 actualVersion="v0.0.0"
 helmChartRepositoryName="ankorstore-registry"
-helmChartRepositoryAddress="http://charts.tools.ankorstore.io/"
+helmChartRepositoryAddress="https://charts.tools.ankorstore.io/"
 applicationChartName="web-application"
 networkChartName="web-network"
 workerChartName="worker-application"
