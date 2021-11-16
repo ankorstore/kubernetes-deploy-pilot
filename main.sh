@@ -503,7 +503,7 @@ fi
 
 # Hard archive version cleaner
 if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $action == "cancel" ]] ); then
-  listRelease=$(helm ls -n $namespace -q --filter $applicationName-v*)
+  listRelease=$(helm ls -n $namespace -q --filter $applicationName-*)
   for release in $listRelease
   do
     if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]]; then
