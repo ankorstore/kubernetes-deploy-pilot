@@ -187,7 +187,7 @@ imagePullPolicy="IfNotPresent"
 function get_running_version {
   local tempVersion=$(kubectl get cm $applicationName-cm -n $namespace -o template --template={{.data.runningVersion}})
   # strict semver check + v prefix https://regexr.com/39s32
-  if [[ $tempVersion =~ ^v{1}.* ]] || [[ $tempVersion == "staging" ]]; then
+  if [[ $tempVersion =~ ^staging-v{1}.* ]] || [[ $tempVersion =~ ^v{1}.* ]] || [[ $tempVersion == "staging" ]]; then
     actualVersion=$tempVersion
   fi
 }
