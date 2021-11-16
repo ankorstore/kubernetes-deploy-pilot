@@ -508,8 +508,11 @@ fi
 if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $action == "cancel" ]] ); then
   listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
   echo "Release to delete : $listRelease"
+  echo "check compare: ${applicationName}-${versionToDeploy}"
+  echo ""
   for release in $listRelease
   do
+    echo "Check on $release"
     if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
       helm delete -n $namespace $release
     fi
