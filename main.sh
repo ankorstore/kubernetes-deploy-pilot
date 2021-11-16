@@ -320,7 +320,7 @@ fi
 ##############################################################
 if [[ $networkValuePath != "" ]]; then
   # Deploy the network part
-  if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
+  if [[ $namespace == "staging" ]] || [[ $action == "complete" ]]; then
     helm upgrade --install \
     -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
     --set deploy.complete=true \
@@ -343,6 +343,19 @@ if [[ $networkValuePath != "" ]]; then
     ${applicationName}-network \
     -n $namespace \
     --version $networkChartVersion \
+    $helmChartRepositoryName/$networkChartName 
+  elif [[ $actualVersion == "v0.0.0" ]]; then
+    helm upgrade --install \
+    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
+    --set deploy.complete=true \
+    --set deploy.runningVersion=$actualVersion \
+    --set deploy.newVersion=$versionToDeploy \
+    --set github.id=$githubId \
+    --set github.path=$githubPath \
+    --set github.url=$githubUrl \
+    --version $networkChartVersion \
+    -n $namespace \
+    ${applicationName}-network \
     $helmChartRepositoryName/$networkChartName 
   else
     helm upgrade --install \
