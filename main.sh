@@ -485,30 +485,7 @@ else
   echo "postgresqlValuePath empty so we ignore it"
 fi
 
-##############################################################
-##################### Deploy smoother ########################
-##############################################################
-if [[ $applicationValuePath != "" ]]; then
-  # Soft old version cleaner
-  if [[ $actualVersion != "v0.0.0" ]] && [[ $actualVersion != $versionToDeploy ]]; then
-    # delete old useless version
-    if [[ $action == "complete" ]]; then
-      # helm delete -n $namespace ${applicationName}-${actualVersion}
-      # instead of deleting old application we set min replicas to 0 and will decrease progressivly
-      helm upgrade \
-      -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
-      --set application.version=$actualVersion \
-      --set application.image.tag=$actualVersion \
-      --set autoscaling.minReplicas=1 \
-      --version $applicationChartVersion \
-      -n $namespace \
-      ${applicationName}-$actualVersion \
-      $helmChartRepositoryName/$applicationChartName 
-    elif [[ $action == "cancel" ]]; then
-      helm delete -n $namespace ${applicationName}-${versionToDeploy}
-    fi
-  fi
-fi
+
 
 ##############################################################
 ############ Clean and archive to keep env clean #############
