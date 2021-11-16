@@ -513,7 +513,7 @@ if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $acti
 fi
 
 # Delete useless empty RS 
-kubectl -n $namespace delete rs $(kubectl get rs --no-headers -n $namespace -l "app.kubernetes.io/instance=${applicationName}-${versionToDeploy}" | awk '{if ($2 + $3 + $4 == 0) print $1}')
+kubectl -n $namespace delete rs $(kubectl get rs --no-headers -n $namespace -l "app.kubernetes.io/name=${applicationName}" | awk '{if ($2 + $3 + $4 == 0) print $1}')
 
 
 ##############################################################
