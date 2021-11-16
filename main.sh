@@ -278,7 +278,9 @@ if [[ $applicationValuePath != "" ]]; then
         echo "Check for application to be ready";
         nbReplicas=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.replicas}})
         nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
-        if [[ $nbReady == $nbReplicas ]] || [[ $nbReady > $nbReplicas ]] ; then
+        echo "nbReplicas = $nbReplicas"
+        echo "nbReady = $nbReady"
+        if [[ $nbReady != "<no value>" ]] && ( [[ $nbReady == $nbReplicas ]] || [[ $nbReady > $nbReplicas ]] ) ; then
           break;
         fi
         sleep 5;
@@ -514,10 +516,10 @@ fi
 
 # Hard archive version cleaner
 if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $action == "cancel" ]] ); then
-  listRelease=$(helm ls -n $namespace -q --filter $applicationName-*)
+  listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
   for release in $listRelease
   do
-    if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]]; then
+    if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
       helm delete -n $namespace $release
     fi
   done
