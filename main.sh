@@ -272,6 +272,17 @@ if [[ $applicationValuePath != "" ]]; then
       echo "Fail to deploy application with code : $?"
       echo "Deploy canceled"
       exit 1;
+    else
+      # wait for ready
+      while true; do
+        echo "Check for application to be ready";
+        nbReplicas=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.replicas}})
+        nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
+        if [[ $nbReady == $nbReplicas ]] || [[ $nbReady > $nbReplicas ]] ; then
+          break;
+        fi
+        sleep 5;
+      done
     fi
   fi
 
