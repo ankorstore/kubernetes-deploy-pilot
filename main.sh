@@ -517,6 +517,7 @@ fi
 # Hard archive version cleaner
 if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $action == "cancel" ]] ); then
   listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
+  echo "Release to delete : $listRelease"
   for release in $listRelease
   do
     if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
