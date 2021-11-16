@@ -246,46 +246,44 @@ if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
 fi
 if [[ $applicationValuePath != "" ]]; then
   # if new version is not deployed yet, do it
-  if [[ $action != "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-    if [[ $useApplicationVersionForImageTag == false ]]; then
-        helm upgrade --install \
-        -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
-        --set application.version=$versionToDeploy \
-        --set application.image.pullPolicy=$imagePullPolicy \
-        --version $applicationChartVersion \
-        -n $namespace \
-        ${applicationName}-$versionToDeploy \
-        $helmChartRepositoryName/$applicationChartName 
-    else
-        helm upgrade --install \
-        -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
-        --set application.version=$versionToDeploy \
-        --set application.image.tag=$versionToDeploy \
-        --set application.image.pullPolicy=$imagePullPolicy \
-        --version $applicationChartVersion \
-        -n $namespace \
-        ${applicationName}-$versionToDeploy \
-        $helmChartRepositoryName/$applicationChartName  
-    fi
-    # Security to stop the process in case of faillure
-    if [[ $? != 0 ]]; then
-      echo "Fail to deploy application with code : $?"
-      echo "Deploy canceled"
-      exit 1;
-    else
-      # wait for ready
-      while true; do
-        echo "Check for application to be ready";
-        nbReplicas=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.replicas}})
-        nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
-        echo "nbReplicas = $nbReplicas"
-        echo "nbReady = $nbReady"
-        if [[ $nbReady != "<no value>" ]] && ( [[ $nbReady == $nbReplicas ]] || [[ $nbReady > $nbReplicas ]] ) ; then
-          break;
-        fi
-        sleep 5;
-      done
-    fi
+  if [[ $useApplicationVersionForImageTag == false ]]; then
+      helm upgrade --install \
+      -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
+      --set application.version=$versionToDeploy \
+      --set application.image.pullPolicy=$imagePullPolicy \
+      --version $applicationChartVersion \
+      -n $namespace \
+      ${applicationName}-$versionToDeploy \
+      $helmChartRepositoryName/$applicationChartName 
+  else
+      helm upgrade --install \
+      -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
+      --set application.version=$versionToDeploy \
+      --set application.image.tag=$versionToDeploy \
+      --set application.image.pullPolicy=$imagePullPolicy \
+      --version $applicationChartVersion \
+      -n $namespace \
+      ${applicationName}-$versionToDeploy \
+      $helmChartRepositoryName/$applicationChartName  
+  fi
+  # Security to stop the process in case of faillure
+  if [[ $? != 0 ]]; then
+    echo "Fail to deploy application with code : $?"
+    echo "Deploy canceled"
+    exit 1;
+  else
+    # wait for ready
+    while true; do
+      echo "Check for application to be ready";
+      nbReplicas=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.replicas}})
+      nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
+      echo "nbReplicas = $nbReplicas"
+      echo "nbReady = $nbReady"
+      if [[ $nbReady != "<no value>" ]] && ( [[ $nbReady == $nbReplicas ]] || [[ $nbReady > $nbReplicas ]] ) ; then
+        break;
+      fi
+      sleep 5;
+    done
   fi
 
   # force roll out to be sure to have the last version 
