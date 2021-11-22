@@ -501,9 +501,9 @@ fi
 ##############################################################
 ############ Clean and archive to keep env clean #############
 ##############################################################
-
 # Hard archive version cleaner
-if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $action == "cancel" ]] ); then
+if [[ $actualVersion != "v0.0.0" ]]; then
+  regex='^v([0-9]*)\.([0-9]*)'
   listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
   echo "Release to delete : $listRelease"
   echo "check compare: ${applicationName}-${versionToDeploy}"
@@ -511,8 +511,26 @@ if [[ $actualVersion != "v0.0.0" ]] && ( [[ $action == "complete" ]] || [[ $acti
   for release in $listRelease
   do
     echo "Check on $release"
-    if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
-      helm delete -n $namespace $release
+    if [[ $action == "complete" ]]; then
+      if [[ $versionToDeploy =~ $regex ]]; then
+        toDeployRunNb=${BASH_REMATCH[1]}
+        toDeployTryNb=${BASH_REMATCH[2]}
+        if [[ $actualVersion =~ $regex ]]; then
+          actualRunNb=${BASH_REMATCH[1]}
+          actualTryNb=${BASH_REMATCH[2]}
+          if [[ $toDeployRunNb > $actualRunNb ]] || ( [[ $toDeployRunNb == $actualRunNb ]] && ( [[ $toDeployTryNb > $actualTryNb ]] || [[ $toDeployTryNb == $actualTryNb ]] ) ); then
+            if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
+              helm delete -n $namespace $release
+              echo "Delete $release"
+            fi
+          fi
+        fi
+      fi
+    elif [[ $action == "cancel" ]]; then
+      if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
+        helm delete -n $namespace $release
+        echo "Delete $release"
+      fi
     fi
   done
 fi
