@@ -513,15 +513,18 @@ if [[ $actualVersion != "v0.0.0" ]]; then
     echo "Check on $release"
     if [[ $action == "complete" ]]; then
       if [[ $versionToDeploy =~ $regex ]]; then
+        echo "compare toDeployRunNb=$toDeployRunNb, toDeployTryNb=$toDeployTryNb"
         toDeployRunNb=${BASH_REMATCH[1]}
         toDeployTryNb=${BASH_REMATCH[2]}
         if [[ $actualVersion =~ $regex ]]; then
+          echo "with actualRunNb=$actualRunNb, actualTryNb=$actualTryNb"
           actualRunNb=${BASH_REMATCH[1]}
           actualTryNb=${BASH_REMATCH[2]}
           if [[ $toDeployRunNb > $actualRunNb ]] || ( [[ $toDeployRunNb == $actualRunNb ]] && ( [[ $toDeployTryNb > $actualTryNb ]] || [[ $toDeployTryNb == $actualTryNb ]] ) ); then
+            echo "first condition OK";
             if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
-              helm delete -n $namespace $release
               echo "Delete $release"
+              helm delete -n $namespace $release
             fi
           fi
         fi
