@@ -12,7 +12,7 @@ if ! git diff --quiet -- remotes/origin/HEAD; then
   exit 1 
 fi
 ## Get last version
-lastVersion=$(git tag --sort=committerdate --list 'v[0-9]*' | tail -n 1)
+lastVersion=$(git tag --sort=creatordate --list 'v[0-9]*' | tail -n 1)
 
 ## New version builder
 PS3='Which kind of change did you made: '
