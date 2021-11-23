@@ -503,7 +503,7 @@ fi
 ##############################################################
 # Hard archive version cleaner
 if [[ $actualVersion != "v0.0.0" ]]; then
-  regex='^v([0-9]*)\.([0-9]*)'
+  regex='^staging-v([0-9]*)\.([0-9]*)'
   listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
   echo "Release to delete : $listRelease"
   echo "check compare: ${applicationName}-${versionToDeploy}"
