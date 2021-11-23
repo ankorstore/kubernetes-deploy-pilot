@@ -512,6 +512,7 @@ if [[ $actualVersion != "v0.0.0" ]]; then
   do
     echo "Check on $release"
     if [[ $action == "complete" ]]; then
+      echo "Action complete"
       if [[ $versionToDeploy =~ $regex ]]; then
         echo "compare toDeployRunNb=$toDeployRunNb, toDeployTryNb=$toDeployTryNb"
         toDeployRunNb=${BASH_REMATCH[1]}
@@ -530,10 +531,13 @@ if [[ $actualVersion != "v0.0.0" ]]; then
         fi
       fi
     elif [[ $action == "cancel" ]]; then
+      echo "Action cancel"
       if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
         helm delete -n $namespace $release
         echo "Delete $release"
       fi
+    else 
+      echo "Unknown Action $action"
     fi
   done
 fi
