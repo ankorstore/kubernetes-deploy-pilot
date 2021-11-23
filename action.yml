@@ -92,6 +92,7 @@ runs:
       env: 
         BASE_WORKING_PATH: "${{ github.workspace }}"
       run: |
+        set -x
         ${{ github.action_path }}/main.sh \
         --application-image-tag="${{ inputs.useApplicationVersionForImageTag }}" \
         --action="${{ inputs.action }}" \
