@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 # exemple usage : 
 # ./main.sh \
 # --application-image-tag="true" \
