@@ -514,13 +514,13 @@ if [[ $actualVersion != "v0.0.0" ]]; then
     if [[ $action == "complete" ]]; then
       echo "Action complete"
       if [[ $versionToDeploy =~ $regex ]]; then
-        echo "compare toDeployRunNb=$toDeployRunNb, toDeployTryNb=$toDeployTryNb"
         toDeployRunNb=${BASH_REMATCH[1]}
         toDeployTryNb=${BASH_REMATCH[2]}
+        echo "compare toDeployRunNb=$toDeployRunNb, toDeployTryNb=$toDeployTryNb"
         if [[ $actualVersion =~ $regex ]]; then
-          echo "with actualRunNb=$actualRunNb, actualTryNb=$actualTryNb"
           actualRunNb=${BASH_REMATCH[1]}
           actualTryNb=${BASH_REMATCH[2]}
+          echo "with actualRunNb=$actualRunNb, actualTryNb=$actualTryNb"
           if [[ $toDeployRunNb > $actualRunNb ]] || ( [[ $toDeployRunNb == $actualRunNb ]] && ( [[ $toDeployTryNb > $actualTryNb ]] || [[ $toDeployTryNb == $actualTryNb ]] ) ); then
             echo "first condition OK";
             if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
