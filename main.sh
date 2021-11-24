@@ -260,6 +260,7 @@ if [[ $applicationValuePath != "" ]]; then
       -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
       --set application.version=$versionToDeploy \
       --set application.image.tag=$versionToDeploy \
+      --set sidecar.image.tag=$versionToDeploy \
       --set application.image.pullPolicy=$imagePullPolicy \
       --version $applicationChartVersion \
       -n $namespace \
