@@ -442,17 +442,32 @@ if [[ $cronJobsValuePath != "" ]]; then
   echo "CronJobsValuePath not empty so we check if we deploy it"
   if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
     echo "It's a complete install or a new install, so we deploy cron jobs"
-    helm upgrade --install \
-    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$cronJobsValuePath" \
-    --set deploy.complete=true \
-    --set application.version=$versionToDeploy \
-    --set github.id=$githubId \
-    --set github.path=$githubPath \
-    --set github.url=$githubUrl \
-    --version $cronJobsChartVersion \
-    -n $namespace \
-    ${applicationName}-cron-jobs \
-    $helmChartRepositoryName/$cronJobsChartName 
+    if [[ $useApplicationVersionForImageTag == false ]]; then
+        helm upgrade --install \
+        -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$cronJobsValuePath" \
+        --set deploy.complete=true \
+        --set application.version=$versionToDeploy \
+        --set github.id=$githubId \
+        --set github.path=$githubPath \
+        --set github.url=$githubUrl \
+        --version $cronJobsChartVersion \
+        -n $namespace \
+        ${applicationName}-cron-jobs \
+        $helmChartRepositoryName/$cronJobsChartName 
+    else
+        helm upgrade --install \
+        -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$cronJobsValuePath" \
+        --set deploy.complete=true \
+        --set application.version=$versionToDeploy \
+        --set application.image.tag=$versionToDeploy \
+        --set github.id=$githubId \
+        --set github.path=$githubPath \
+        --set github.url=$githubUrl \
+        --version $cronJobsChartVersion \
+        -n $namespace \
+        ${applicationName}-cron-jobs \
+        $helmChartRepositoryName/$cronJobsChartName 
+    fi
     # Security to stop the process in case of faillure
     if [[ $? != 0 ]]; then
       echo "Fail to deploy cron jobs with code : $?"
