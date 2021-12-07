@@ -34,16 +34,16 @@ inputs:
     description: 'Path of cron jobs value file'
     required: false
     default: ""
-  postgresqlValuePath:
-    description: 'Path of Postgres value file'
-    required: false
-    default: ""
   commonValuePath:
     description: 'Path of common value file'
     required: false
     default: ""
   useApplicationVersionForImageTag:
     description: 'Do we use the new application version to set the docker image tag'
+    required: false
+    default: "false"
+  forceScaleNewVersion:
+    description: 'Do we scale the new version with the running version pod number'
     required: false
     default: "false" 
   ApplicationChartVersion:
@@ -60,10 +60,6 @@ inputs:
     default: "latest"
   cronJobsChartVersion:
     description: 'Version to use for cron jobs chart'
-    required: false
-    default: "latest"
-  postgresqlChartVersion:
-    description: 'Version to use for postgres chart'
     required: false
     default: "latest"
   github-id:
@@ -94,6 +90,7 @@ runs:
       run: |
         ${{ github.action_path }}/main.sh \
         --application-image-tag="${{ inputs.useApplicationVersionForImageTag }}" \
+        --force-scale-new-version="${{ inputs.forceScaleNewVersion }}" \
         --action="${{ inputs.action }}" \
         --namespace="${{ inputs.namespace }}" \
         --version-deploy="${{ inputs.version-to-deploy }}" \
@@ -102,12 +99,10 @@ runs:
         --worker-value-path="${{ inputs.workerValuePath }}" \
         --common-value-path="${{ inputs.commonValuePath }}" \
         --cron-jobs-value-path="${{ inputs.cronJobsValuePath }}" \
-        --postgresql-value-path="${{ inputs.postgresqlValuePath }}" \
         --app-chart-version="${{ inputs.ApplicationChartVersion }}" \
         --network-chart-version="${{ inputs.networkChartVersion }}" \
         --worker-chart-version="${{ inputs.workerChartVersion }}" \
         --cron-jobs-chart-version="${{ inputs.cronJobsChartVersion }}" \
-        --postgresql-chart-version="${{ inputs.postgresqlChartVersion }}" \
         --github-id="${{ inputs.github-id }}" \
         --github-path="${{ inputs.github-path }}" \
         --github-url="${{ inputs.github-url }}" \

@@ -24,18 +24,17 @@
 versionToDeploy="" # => --version-deploy
 namespace="" # => --namespace
 action="" # => --action
-useApplicationVersionForImageTag="false" # => -t
+useApplicationVersionForImageTag="false" # => --application-image-tag
+forceScaleNewVersion="false" # => --force-scale-new-version
 applicationValuePath="" # => --app-value-path
 networkValuePath="" # => --network-value-path
 workerValuePath="" # => --worker-value-path
 cronJobsValuePath="" # => --cron-jobs-value-path
-postgresqlValuePath="" # => --postgresql-value-path
 commonValuePath="" # => --common-value-path
 applicationChartVersion="" # => --app-chart-version
 networkChartVersion="" # => --network-chart-version
 workerChartVersion="" # => --worker-chart-version
 cronJobsChartVersion="" # => --cron-jobs-chart-version
-postgresqlChartVersion="" # => --postgresql-chart-version
 githubId="" # => --github-id
 githubPath="" # => --github-path
 githubUrl="" # => --github-url
@@ -50,6 +49,7 @@ while test $# -gt 0; do
       echo "options:"
       echo "-h, --help                                         Show brief help"
       echo "--application-image-tag=true|false                 Use application version for docker image tag"
+      echo "--force-scale-new-version=true|false               Force scale the new version to the actual prod size"
       echo "--action=create|complete|update|cancel             Specify an action to apply"
       echo "--version-deploy=VERSIONTODEPLOY                   Give the version to deploy"
       echo "--namespace=production|staging                     Target namespace"
@@ -63,7 +63,6 @@ while test $# -gt 0; do
       echo "--network-chart-version=NETWORKCHARTVERSION        Version to use for network chart"
       echo "--worker-chart-version=WORKERCHARTVERSION          Version to use for worker chart"
       echo "--cron-jobs-chart-version=CRONJOBSCHARTVERSION     Version to use for cron jobs chart"
-      echo "--postgresql-chart-version=POSTGRESQLCHARTVERSION  Version to use for postgresql chart"
       echo "--github-id=GITHUBID                               Github repo ID"
       echo "--github-path=GITHUBPATH                           Github repo PATH"
       echo "--github-url=GITHUBURL                             Github repo URL"
@@ -71,6 +70,10 @@ while test $# -gt 0; do
       ;;
     --application-image-tag*)
       useApplicationVersionForImageTag=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --force-scale-new-version*)
+      forceScaleNewVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --github-id*)
@@ -101,10 +104,6 @@ while test $# -gt 0; do
       cronJobsValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
-    --postgresql-value-path*)
-      postgresqlValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
-      shift
-      ;;
     --common-value-path*)
       commonValuePath=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
@@ -123,10 +122,6 @@ while test $# -gt 0; do
       ;;
     --cron-jobs-chart-version*)
       cronJobsChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
-      shift
-      ;;
-    --postgresql-chart-version*)
-      postgresqlChartVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --action*)
@@ -159,8 +154,8 @@ applicationChartName="web-application"
 networkChartName="web-network"
 workerChartName="worker-application"
 cronJobsChartName="cron-jobs"
-postgresqlChartName="postgresql"
 imagePullPolicy="IfNotPresent"
+defaultNewVersionReplicas=2
 
 ##############################################################
 ########################## DEBUG #############################
@@ -231,10 +226,6 @@ if [[ $cronJobsChartVersion == "latest" ]]; then
   cronJobsChartVersion=$(helm show chart $helmChartRepositoryName/$cronJobsChartName | grep "version:" | awk '{ print $2}')
   echo "Latest cron jobs chart version is $cronJobsChartVersion"
 fi
-if [[ $postgresqlChartVersion == "latest" ]]; then
-  postgresqlChartVersion=$(helm show chart $helmChartRepositoryName/$postgresqlChartName | grep "version:" | awk '{ print $2}')
-  echo "Latest postgresql chart version is $postgresqlChartVersion"
-fi
 
 ##############################################################
 ################# Application Deploy #########################
@@ -273,45 +264,46 @@ if [[ $applicationValuePath != "" ]]; then
     echo "Deploy canceled"
     exit 1;
   else
-    # wait for ready
-    while true; do
-      echo "Check for application to be ready";
-      nbReplicas=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.replicas}})
-      nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
-      echo "nbReplicas = $nbReplicas"
-      echo "nbReady = $nbReady"
-      if [[ $nbReady != "<no value>" ]] && ( [[ $nbReady == $nbReplicas ]] || [[ $nbReady > $nbReplicas ]] ) ; then
-        break;
+    if [[ $forceScaleNewVersion == true ]] && [[ $actualVersion != "v0.0.0" ]]; then
+      echo "Force scale new version to same pod number as running version"
+      actualVersionReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeActualVersion-hpa -o template --template={{.status.currentReplicas}})
+      defaultNewVersionReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeVersionToDeploy-hpa -o template --template={{.spec.minReplicas}})
+      echo "Running version pod number: $actualVersionReplicas"
+      echo "Default number of pod of the new version: $defaultNewVersionReplicas"
+      #security to avoid going under new version min replicas
+      if [[ $VersionToDeployMinReplicas > $actualVersionReplicas ]]; then
+          echo "Security trigger, the running version pod number is under new version minimum"
+          echo "For safety we keep minimum pod number of the new version as reference"
+          actualVersionReplicas=$VersionToDeployMinReplicas
       fi
-      sleep 5;
-    done
+      kubectl patch hpa ${applicationName}-$safeVersionToDeploy-hpa -p "{\"spec\":{\"minReplicas\":$actualVersionReplicas}}"
+      while true; do
+          echo "Check for application to be ready";
+          nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
+          echo "nbReady = $nbReady"
+          echo "nbDesired = $actualVersionReplicas"
+          if [[ $nbReady != "<no value>" ]] && ( [[ $nbReady == $actualVersionReplicas ]] || [[ $nbReady > $actualVersionReplicas ]] ) ; then
+              break;
+          fi
+          sleep 5;
+      done
+    else
+        # wait for ready
+        while true; do
+            echo "Check for application to be ready";
+            nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
+            echo "nbReady = $nbReady"
+            if [[ $nbReady != "<no value>" ]] && ( [[ $nbReady == 1 ]] || [[ $nbReady > 1 ]] ) ; then
+                break;
+            fi
+            sleep 5;
+        done
+    fi
   fi
 
   # force roll out to be sure to have the last version 
   if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
     kubectl rollout restart -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy
-  fi
-
-
-  ##############################################################
-  ################### Deploy auto scaler #######################
-  ##############################################################
-
-  # Auto scale new version to be ready for prod volume
-  if [[ $action == "complete" ]] && [[ $actualVersion != "v0.0.0" ]]; then
-    # get replicas on running version
-    actualVersionReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeActualVersion-hpa -o template --template={{.status.currentReplicas}})
-    # get new version min replicas
-    VersionToDeployMinReplicas=$(kubectl get hpa -n $namespace ${applicationName}-$safeVersionToDeploy-hpa -o template --template={{.spec.minReplicas}})
-    # check if valid int
-    if [[ "$actualVersionReplicas" == "$actualVersionReplicas" ]] && [[ "$VersionToDeployMinReplicas" == "$VersionToDeployMinReplicas" ]] 2>/dev/null
-    then
-      #security to avoid going under new version min replicas
-      if [[ $VersionToDeployMinReplicas > $actualVersionReplicas ]]; then
-        actualVersionReplicas=$VersionToDeployMinReplicas
-      fi
-      kubectl scale deploy ${applicationName}-$safeVersionToDeploy-deploy -n $namespace --replicas=$actualVersionReplicas
-    fi
   fi
 fi
 ##############################################################
@@ -375,6 +367,10 @@ if [[ $networkValuePath != "" ]]; then
     echo "Fail to deploy Network with code : $?"
     echo "Deploy canceled"
     exit 1;
+  fi
+  if [[ $forceScaleNewVersion == true ]] && [[ $actualVersion != "v0.0.0" ]]; then
+    echo "Scale down new version min replicas to default value: $defaultNewVersionReplicas"
+    kubectl patch hpa ${applicationName}-$safeVersionToDeploy-hpa -p "{\"spec\":{\"minReplicas\":$defaultNewVersionReplicas}}"
   fi
 fi
 
@@ -482,44 +478,13 @@ else
   echo "CronJobsValuePath empty so we ignore it"
 fi
 
-##############################################################
-################## PostgreSQL Deploy #########################
-##############################################################
-
-# Deploy the Postgresql part
-if [[ $postgresqlValuePath != "" ]]; then
-  echo "postgresqlValuePath not empty so we check if we deploy it"
-  if [[ $namespace == "staging" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]]; then
-    echo "It's a complete install or a new install, so we deploy postgresql"
-    helm upgrade --install \
-    -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$postgresqlValuePath" \
-    --set application.version=$versionToDeploy \
-    --version $postgresqlChartVersion \
-    -n $namespace \
-    ${applicationName}-postgresql-$versionToDeploy \
-    $helmChartRepositoryName/$postgresqlChartName 
-    # Security to stop the process in case of faillure
-    if [[ $? != 0 ]]; then
-      echo "Fail to deploy postgresql with code : $?"
-      echo "Deploy canceled"
-      exit 1;
-    fi
-    echo "postgresql deployed successfully"
-  else
-    echo "It's not a complete deploy so we don't deploy postgresql"
-  fi
-else
-  echo "postgresqlValuePath empty so we ignore it"
-fi
-
-
 
 ##############################################################
 ############ Clean and archive to keep env clean #############
 ##############################################################
 # Hard archive version cleaner
 if [[ $actualVersion != "v0.0.0" ]]; then
-  regex='^staging-v([0-9]*)\.([0-9]*)'
+  staging_regex='^staging-v([0-9]*)\.([0-9]*)'
   listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
   echo "Release to delete : $listRelease"
   echo "check compare: ${applicationName}-${versionToDeploy}"
@@ -529,11 +494,11 @@ if [[ $actualVersion != "v0.0.0" ]]; then
     echo "Check on $release"
     if [[ $action == "complete" ]]; then
       echo "Action complete"
-      if [[ $versionToDeploy =~ $regex ]]; then
+      if [[ $versionToDeploy =~ $staging_regex ]]; then
         echo "compare toDeployRunNb=$toDeployRunNb, toDeployTryNb=$toDeployTryNb"
         toDeployRunNb=${BASH_REMATCH[1]}
         toDeployTryNb=${BASH_REMATCH[2]}
-        if [[ $actualVersion =~ $regex ]]; then
+        if [[ $actualVersion =~ $staging_regex ]]; then
           echo "with actualRunNb=$actualRunNb, actualTryNb=$actualTryNb"
           actualRunNb=${BASH_REMATCH[1]}
           actualTryNb=${BASH_REMATCH[2]}
@@ -546,7 +511,12 @@ if [[ $actualVersion != "v0.0.0" ]]; then
           fi
         fi
       else 
-        echo "Fail first regex condition : versionToDeploy =~ regex  => ^v([0-9]*)\.([0-9]*)"
+        echo "Release do not seem to be staging deploy"
+        echo "We skip anti regression test"
+        if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
+          echo "Delete $release"
+          helm delete -n $namespace $release
+        fi
       fi
     elif [[ $action == "cancel" ]]; then
       echo "Action cancel"
