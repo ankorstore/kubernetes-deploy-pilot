@@ -20,9 +20,7 @@
 ##############################################################
 ####################### ARGUMENTS ############################
 ##############################################################
-
-versionToDeploy="" # => --version-deploy
-namespace="" # => --namespace
+.
 action="" # => --action
 useApplicationVersionForImageTag="false" # => --application-image-tag
 forceScaleNewVersion="false" # => --force-scale-new-version
@@ -276,14 +274,18 @@ if [[ $applicationValuePath != "" ]]; then
           echo "For safety we keep minimum pod number of the new version as reference"
           actualVersionReplicas=$VersionToDeployMinReplicas
       fi
-      kubectl patch hpa ${applicationName}-$safeVersionToDeploy-hpa -p "{\"spec\":{\"minReplicas\":$actualVersionReplicas}}"
+      kubectl patch -n $namespace hpa ${applicationName}-$safeVersionToDeploy-hpa -p "{\"spec\":{\"minReplicas\":$actualVersionReplicas}}"
       while true; do
           echo "Check for application to be ready";
           nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
           echo "nbReady = $nbReady"
           echo "nbDesired = $actualVersionReplicas"
-          if [[ $nbReady != "<no value>" ]] && ( [[ $nbReady == $actualVersionReplicas ]] || [[ $nbReady > $actualVersionReplicas ]] ) ; then
+          if [[ $nbReady != "<no value>" ]];then
+            result=$((10#$nbReady - 10#$actualVersionReplicas))
+            if if [[ $result -eq 0 || $result -gt 0 ]]; then
+              echo "New version properly scaled, lets continue deployment"
               break;
+            fi
           fi
           sleep 5;
       done
@@ -369,6 +371,7 @@ if [[ $networkValuePath != "" ]]; then
     exit 1;
   fi
   if [[ $forceScaleNewVersion == true ]] && [[ $actualVersion != "v0.0.0" ]]; then
+    sleep 5
     echo "Scale down new version min replicas to default value: $defaultNewVersionReplicas"
     kubectl patch hpa ${applicationName}-$safeVersionToDeploy-hpa -p "{\"spec\":{\"minReplicas\":$defaultNewVersionReplicas}}"
   fi
