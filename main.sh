@@ -20,7 +20,7 @@
 ##############################################################
 ####################### ARGUMENTS ############################
 ##############################################################
-.
+
 action="" # => --action
 useApplicationVersionForImageTag="false" # => --application-image-tag
 forceScaleNewVersion="false" # => --force-scale-new-version
@@ -257,7 +257,7 @@ if [[ $applicationValuePath != "" ]]; then
       $helmChartRepositoryName/$applicationChartName  
   fi
   # Security to stop the process in case of faillure
-  if [[ $? != 0 ]]; then
+  if [[ $? -ne 0 ]]; then
     echo "Fail to deploy application with code : $?"
     echo "Deploy canceled"
     exit 1;
@@ -281,8 +281,7 @@ if [[ $applicationValuePath != "" ]]; then
           echo "nbReady = $nbReady"
           echo "nbDesired = $actualVersionReplicas"
           if [[ $nbReady != "<no value>" ]];then
-            result=$((10#$nbReady - 10#$actualVersionReplicas))
-            if [[ $result -eq 0 || $result -gt 0 ]]; then
+            if [[ $nbReady -ge $actualVersionReplicas ]]; then
               echo "New version properly scaled, lets continue deployment"
               break;
             fi
@@ -295,7 +294,7 @@ if [[ $applicationValuePath != "" ]]; then
             echo "Check for application to be ready";
             nbReady=$(kubectl get -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy -o template --template={{.status.readyReplicas}})
             echo "nbReady = $nbReady"
-            if [[ $nbReady != "<no value>" ]] && ( [[ $nbReady == 1 ]] || [[ $nbReady > 1 ]] ) ; then
+            if [[ $nbReady != "<no value>" ]] && [[ $nbReady -ge 1 ]] ; then
                 break;
             fi
             sleep 5;
@@ -365,7 +364,7 @@ if [[ $networkValuePath != "" ]]; then
     $helmChartRepositoryName/$networkChartName 
   fi
   # Security to stop the process in case of faillure
-  if [[ $? != 0 ]]; then
+  if [[ $? -ne 0 ]]; then
     echo "Fail to deploy Network with code : $?"
     echo "Deploy canceled"
     exit 1;
@@ -415,7 +414,7 @@ if [[ $workerValuePath != "" ]]; then
       $helmChartRepositoryName/$workerChartName 
     fi
     # Security to stop the process in case of faillure
-    if [[ $? != 0 ]]; then
+    if [[ $? -ne 0 ]]; then
       echo "Fail to deploy worker with code : $?"
       echo "Deploy canceled"
       exit 1;
@@ -468,7 +467,7 @@ if [[ $cronJobsValuePath != "" ]]; then
         $helmChartRepositoryName/$cronJobsChartName 
     fi
     # Security to stop the process in case of faillure
-    if [[ $? != 0 ]]; then
+    if [[ $? -ne 0 ]]; then
       echo "Fail to deploy cron jobs with code : $?"
       echo "Deploy canceled"
       exit 1;
