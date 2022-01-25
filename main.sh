@@ -282,7 +282,7 @@ if [[ $applicationValuePath != "" ]]; then
           echo "nbDesired = $actualVersionReplicas"
           if [[ $nbReady != "<no value>" ]];then
             result=$((10#$nbReady - 10#$actualVersionReplicas))
-            if if [[ $result -eq 0 || $result -gt 0 ]]; then
+            if [[ $result -eq 0 || $result -gt 0 ]]; then
               echo "New version properly scaled, lets continue deployment"
               break;
             fi
