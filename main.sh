@@ -372,7 +372,7 @@ if [[ $networkValuePath != "" ]]; then
   if [[ $forceScaleNewVersion == true ]] && [[ $actualVersion != "v0.0.0" ]]; then
     sleep 5
     echo "Scale down new version min replicas to default value: $defaultNewVersionReplicas"
-    kubectl patch hpa ${applicationName}-$safeVersionToDeploy-hpa -p "{\"spec\":{\"minReplicas\":$defaultNewVersionReplicas}}"
+    kubectl -n $namespace patch hpa ${applicationName}-$safeVersionToDeploy-hpa -p "{\"spec\":{\"minReplicas\":$defaultNewVersionReplicas}}"
   fi
 fi
 
