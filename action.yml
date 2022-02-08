@@ -46,6 +46,10 @@ inputs:
     description: 'Do we scale the new version with the running version pod number'
     required: false
     default: "false" 
+  scaleDownPreviousVersion:
+    description: 'Scale down the previous version to reduce ressources consumptions'
+    required: false
+    default: "false" 
   ApplicationChartVersion:
     description: 'Version to use for application chart'
     required: false
@@ -91,6 +95,7 @@ runs:
         ${{ github.action_path }}/main.sh \
         --application-image-tag="${{ inputs.useApplicationVersionForImageTag }}" \
         --force-scale-new-version="${{ inputs.forceScaleNewVersion }}" \
+        --scale-down-previous-version="${{ inputs.scaleDownPreviousVersion }}" \
         --action="${{ inputs.action }}" \
         --namespace="${{ inputs.namespace }}" \
         --version-deploy="${{ inputs.version-to-deploy }}" \

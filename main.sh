@@ -24,6 +24,7 @@
 action="" # => --action
 useApplicationVersionForImageTag="false" # => --application-image-tag
 forceScaleNewVersion="false" # => --force-scale-new-version
+scaleDownPreviousVersion="false" # => --scale-down-previous-version
 applicationValuePath="" # => --app-value-path
 networkValuePath="" # => --network-value-path
 workerValuePath="" # => --worker-value-path
@@ -48,6 +49,7 @@ while test $# -gt 0; do
       echo "-h, --help                                         Show brief help"
       echo "--application-image-tag=true|false                 Use application version for docker image tag"
       echo "--force-scale-new-version=true|false               Force scale the new version to the actual prod size"
+      echo "--scale-down-previous-version=true|false           Scale down the previous version to reduce ressources consumptions"
       echo "--action=create|complete|update|cancel             Specify an action to apply"
       echo "--version-deploy=VERSIONTODEPLOY                   Give the version to deploy"
       echo "--namespace=production|staging                     Target namespace"
@@ -72,6 +74,10 @@ while test $# -gt 0; do
       ;;
     --force-scale-new-version*)
       forceScaleNewVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --scale-down-previous-version*)
+      scaleDownPreviousVersion=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
     --github-id*)
@@ -372,7 +378,12 @@ if [[ $networkValuePath != "" ]]; then
   if [[ $forceScaleNewVersion == true ]] && [[ $actualVersion != "v0.0.0" ]]; then
     sleep 5
     echo "Scale down new version min replicas to default value: $defaultNewVersionReplicas"
-    kubectl -n $namespace patch hpa ${applicationName}-$safeVersionToDeploy-hpa -p "{\"spec\":{\"minReplicas\":$defaultNewVersionReplicas}}"
+    kubectl -n $namespace patch hpa ${applicationName}-${safeVersionToDeploy}-hpa -p "{\"spec\":{\"minReplicas\":$defaultNewVersionReplicas}}"
+  fi
+  if [[ $scaleDownPreviousVersion == true ]] && [[ $actualVersion != "v0.0.0" ]]; then
+    sleep 5
+    echo "Scale down running version min replicas 1"
+    kubectl -n $namespace patch hpa ${applicationName}-${safeActualVersion}-hpa -p "{\"spec\":{\"minReplicas\":1}}"
   fi
 fi
 
