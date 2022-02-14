@@ -498,6 +498,7 @@ fi
 # Hard archive version cleaner
 if [[ $actualVersion != "v0.0.0" ]]; then
   staging_regex="^$applicationName-(staging|$namespace)-v([0-9]*)\.([0-9]*)"
+  echo "Cmd to get release list: helm ls -n $namespace -q --filter $applicationName-"
   listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
   echo "Release to delete : $listRelease"
   echo "check compare: ${applicationName}-${versionToDeploy}"
