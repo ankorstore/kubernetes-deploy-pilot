@@ -186,11 +186,11 @@ defaultNewVersionReplicas=2
 function get_running_version {
   local tempVersion=$(kubectl get cm $applicationName-cm -n $namespace -o template --template={{.data.runningVersion}})
   # strict semver check + v prefix https://regexr.com/39s32
-  if [[ $tempVersion =~ ^staging-v{1}.* ]] || [[ $tempVersion =~ ^v{1}.* ]] || [[ $tempVersion == "staging" ]]; then
+  if [[ $tempVersion =~ ^(staging|$namespace)-v{1}.* ]] || [[ $tempVersion =~ ^v{1}.* ]] || [[ $tempVersion == "staging" ]]; then
     actualVersion=$tempVersion
   fi
+  echo "Actual version from get running version function: $actualVersion";
 }
-
 ##############################################################
 ################### Init and security ########################
 ##############################################################
