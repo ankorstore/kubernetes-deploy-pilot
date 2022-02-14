@@ -497,7 +497,7 @@ fi
 ##############################################################
 # Hard archive version cleaner
 if [[ $actualVersion != "v0.0.0" ]]; then
-  staging_regex='^staging-v([0-9]*)\.([0-9]*)'
+  staging_regex="^$applicationName-(staging|$namespace)-v([0-9]*)\.([0-9]*)"
   listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
   echo "Release to delete : $listRelease"
   echo "check compare: ${applicationName}-${versionToDeploy}"
@@ -509,12 +509,12 @@ if [[ $actualVersion != "v0.0.0" ]]; then
       echo "Action complete"
       if [[ $versionToDeploy =~ $staging_regex ]]; then
         echo "compare toDeployRunNb=$toDeployRunNb, toDeployTryNb=$toDeployTryNb"
-        toDeployRunNb=${BASH_REMATCH[1]}
-        toDeployTryNb=${BASH_REMATCH[2]}
+        toDeployRunNb=${BASH_REMATCH[2]}
+        toDeployTryNb=${BASH_REMATCH[3]}
         if [[ $actualVersion =~ $staging_regex ]]; then
           echo "with actualRunNb=$actualRunNb, actualTryNb=$actualTryNb"
-          actualRunNb=${BASH_REMATCH[1]}
-          actualTryNb=${BASH_REMATCH[2]}
+          actualRunNb=${BASH_REMATCH[2]}
+          actualTryNb=${BASH_REMATCH[3]}
           if [[ $toDeployRunNb > $actualRunNb ]] || ( [[ $toDeployRunNb == $actualRunNb ]] && ( [[ $toDeployTryNb > $actualTryNb ]] || [[ $toDeployTryNb == $actualTryNb ]] ) ); then
             echo "first condition OK";
             if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
