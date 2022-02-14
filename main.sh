@@ -496,8 +496,10 @@ fi
 ############ Clean and archive to keep env clean #############
 ##############################################################
 # Hard archive version cleaner
+echo "Actual version for hard cleaner: $actualVersion"
 if [[ $actualVersion != "v0.0.0" ]]; then
   staging_regex="^$applicationName-(staging|$namespace)-v([0-9]*)\.([0-9]*)"
+  echo "Consolidated staging_regex: $staging_regex"
   echo "Cmd to get release list: helm ls -n $namespace -q --filter $applicationName-"
   listRelease=$(helm ls -n $namespace -q --filter $applicationName-)
   echo "Release to delete : $listRelease"
@@ -542,11 +544,13 @@ if [[ $actualVersion != "v0.0.0" ]]; then
       echo "Unknown Action $action"
     fi
   done
+else
+  echo "Actual version is $actualVersion, so ignore old version cleaner"
 fi
 
 # Delete useless empty RS 
+echo "Clean old and empty replicaset set."
 kubectl -n $namespace delete rs $(kubectl get rs --no-headers -n $namespace -l "app.kubernetes.io/name=${applicationName}" | awk '{if ($2 + $3 + $4 == 0) print $1}')
-
 
 ##############################################################
 ########################## OUPUT #############################
