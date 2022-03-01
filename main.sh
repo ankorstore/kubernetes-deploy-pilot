@@ -245,6 +245,7 @@ if [[ $applicationValuePath != "" ]]; then
       helm upgrade --install \
       -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
       --set application.version=$versionToDeploy \
+      --set application.namespace=$namespace \
       --set application.image.pullPolicy=$imagePullPolicy \
       --version $applicationChartVersion \
       -n $namespace \
@@ -255,6 +256,7 @@ if [[ $applicationValuePath != "" ]]; then
       -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
       --set application.version=$versionToDeploy \
       --set application.image.tag=$versionToDeploy \
+      --set application.namespace=$namespace \
       --set sidecar.image.tag=$versionToDeploy \
       --set application.image.pullPolicy=$imagePullPolicy \
       --version $applicationChartVersion \
@@ -323,6 +325,7 @@ if [[ $networkValuePath != "" ]]; then
     -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
     --set deploy.complete=true \
     --set deploy.newVersion=$versionToDeploy \
+    --set application.namespace=$namespace \
     --set github.id=$githubId \
     --set github.path=$githubPath \
     --set github.url=$githubUrl \
@@ -335,6 +338,7 @@ if [[ $networkValuePath != "" ]]; then
     -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
     --set deploy.complete=true  \
     --set github.id=$githubId \
+    --set application.namespace=$namespace \
     --set github.path=$githubPath \
     --set github.url=$githubUrl \
     --set deploy.newVersion=$actualVersion \
@@ -346,6 +350,7 @@ if [[ $networkValuePath != "" ]]; then
     helm upgrade --install \
     -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
     --set deploy.complete=true \
+    --set application.namespace=$namespace \
     --set deploy.runningVersion=$actualVersion \
     --set deploy.newVersion=$versionToDeploy \
     --set github.id=$githubId \
@@ -359,6 +364,7 @@ if [[ $networkValuePath != "" ]]; then
     helm upgrade --install \
     -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
     --set deploy.complete=false \
+    --set application.namespace=$namespace \
     --set github.id=$githubId \
     --set github.path=$githubPath \
     --set github.url=$githubUrl \
@@ -402,6 +408,7 @@ if [[ $workerValuePath != "" ]]; then
     --set deploy.complete=true \
     --set application.version=$versionToDeploy \
     --set application.image.pullPolicy=$imagePullPolicy \
+    --set application.namespace=$namespace \
     --set github.id=$githubId \
     --set github.path=$githubPath \
     --set github.url=$githubUrl \
@@ -416,6 +423,7 @@ if [[ $workerValuePath != "" ]]; then
       --set application.version=$versionToDeploy \
       --set application.image.tag=$versionToDeploy \
       --set application.image.pullPolicy=$imagePullPolicy \
+      --set application.namespace=$namespace \
       --set github.id=$githubId \
       --set github.path=$githubPath \
       --set github.url=$githubUrl \
@@ -456,6 +464,7 @@ if [[ $cronJobsValuePath != "" ]]; then
         -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$cronJobsValuePath" \
         --set deploy.complete=true \
         --set application.version=$versionToDeploy \
+        --set application.namespace=$namespace \
         --set github.id=$githubId \
         --set github.path=$githubPath \
         --set github.url=$githubUrl \
@@ -469,6 +478,7 @@ if [[ $cronJobsValuePath != "" ]]; then
         --set deploy.complete=true \
         --set application.version=$versionToDeploy \
         --set application.image.tag=$versionToDeploy \
+        --set application.namespace=$namespace \
         --set github.id=$githubId \
         --set github.path=$githubPath \
         --set github.url=$githubUrl \
