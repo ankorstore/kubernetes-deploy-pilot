@@ -1,6 +1,6 @@
 #!/bin/bash
 # set -x
-# exemple usage : 
+# exemple usage :
 # ./main.sh \
 # --application-image-tag="true" \
 # --action="update" \
@@ -235,7 +235,7 @@ fi
 ################# Application Deploy #########################
 ##############################################################
 
-# force image pull policy in case of update but avoid it if no version installed 
+# force image pull policy in case of update but avoid it if no version installed
 if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
   imagePullPolicy="Always"
 fi
@@ -250,7 +250,7 @@ if [[ $applicationValuePath != "" ]]; then
       --version $applicationChartVersion \
       -n $namespace \
       ${applicationName}-$versionToDeploy \
-      $helmChartRepositoryName/$applicationChartName 
+      $helmChartRepositoryName/$applicationChartName
   else
       helm upgrade --install \
       -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$applicationValuePath" \
@@ -262,7 +262,7 @@ if [[ $applicationValuePath != "" ]]; then
       --version $applicationChartVersion \
       -n $namespace \
       ${applicationName}-$versionToDeploy \
-      $helmChartRepositoryName/$applicationChartName  
+      $helmChartRepositoryName/$applicationChartName
   fi
   # Security to stop the process in case of faillure
   if [[ $? -ne 0 ]]; then
@@ -310,7 +310,7 @@ if [[ $applicationValuePath != "" ]]; then
     fi
   fi
 
-  # force roll out to be sure to have the last version 
+  # force roll out to be sure to have the last version
   if [[ $actualVersion != "v0.0.0" ]] && [[ $action == "update" ]]; then
     kubectl rollout restart -n $namespace deployment.apps/${applicationName}-$safeVersionToDeploy-deploy
   fi
@@ -332,7 +332,7 @@ if [[ $networkValuePath != "" ]]; then
     --version $networkChartVersion \
     -n $namespace \
     ${applicationName}-network \
-    $helmChartRepositoryName/$networkChartName 
+    $helmChartRepositoryName/$networkChartName
   elif [[ $action == "cancel" ]]; then
     helm upgrade --install \
     -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
@@ -345,7 +345,7 @@ if [[ $networkValuePath != "" ]]; then
     ${applicationName}-network \
     -n $namespace \
     --version $networkChartVersion \
-    $helmChartRepositoryName/$networkChartName 
+    $helmChartRepositoryName/$networkChartName
   elif [[ $actualVersion == "v0.0.0" ]]; then
     helm upgrade --install \
     -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
@@ -359,7 +359,7 @@ if [[ $networkValuePath != "" ]]; then
     --version $networkChartVersion \
     -n $namespace \
     ${applicationName}-network \
-    $helmChartRepositoryName/$networkChartName 
+    $helmChartRepositoryName/$networkChartName
   else
     helm upgrade --install \
     -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$networkValuePath" \
@@ -373,7 +373,7 @@ if [[ $networkValuePath != "" ]]; then
     --version $networkChartVersion \
     -n $namespace \
     ${applicationName}-network \
-    $helmChartRepositoryName/$networkChartName 
+    $helmChartRepositoryName/$networkChartName
   fi
   # Security to stop the process in case of faillure
   if [[ $? -ne 0 ]]; then
@@ -415,7 +415,7 @@ if [[ $workerValuePath != "" ]]; then
     --version $workerChartVersion \
     -n $namespace \
     ${applicationName}-worker \
-    $helmChartRepositoryName/$workerChartName 
+    $helmChartRepositoryName/$workerChartName
     else
       helm upgrade --install \
       -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$workerValuePath" \
@@ -430,7 +430,7 @@ if [[ $workerValuePath != "" ]]; then
       --version $workerChartVersion \
       -n $namespace \
       ${applicationName}-worker \
-      $helmChartRepositoryName/$workerChartName 
+      $helmChartRepositoryName/$workerChartName
     fi
     # Security to stop the process in case of faillure
     if [[ $? -ne 0 ]]; then
@@ -438,7 +438,7 @@ if [[ $workerValuePath != "" ]]; then
       echo "Deploy canceled"
       exit 1;
     fi
-    # force roll out to be sure to have the last version 
+    # force roll out to be sure to have the last version
     if [[ $action == "update" ]] || [[ $action == "complete" ]] || [[ $actualVersion == "v0.0.0" ]] ; then
       kubectl rollout restart -n $namespace deployment.apps/${applicationName}-worker-$safeVersionToDeploy-deploy
     fi
@@ -471,7 +471,7 @@ if [[ $cronJobsValuePath != "" ]]; then
         --version $cronJobsChartVersion \
         -n $namespace \
         ${applicationName}-cron-jobs \
-        $helmChartRepositoryName/$cronJobsChartName 
+        $helmChartRepositoryName/$cronJobsChartName
     else
         helm upgrade --install \
         -f "$(if [ -f $BASE_WORKING_PATH/$commonValuePath ]; then echo $BASE_WORKING_PATH/$commonValuePath,; fi)$BASE_WORKING_PATH/$cronJobsValuePath" \
@@ -485,7 +485,7 @@ if [[ $cronJobsValuePath != "" ]]; then
         --version $cronJobsChartVersion \
         -n $namespace \
         ${applicationName}-cron-jobs \
-        $helmChartRepositoryName/$cronJobsChartName 
+        $helmChartRepositoryName/$cronJobsChartName
     fi
     # Security to stop the process in case of faillure
     if [[ $? -ne 0 ]]; then
@@ -530,27 +530,27 @@ if [[ $actualVersion != "v0.0.0" ]]; then
           actualTryNb=${BASH_REMATCH[3]}
           if [[ $toDeployRunNb > $actualRunNb ]] || ( [[ $toDeployRunNb == $actualRunNb ]] && ( [[ $toDeployTryNb > $actualTryNb ]] || [[ $toDeployTryNb == $actualTryNb ]] ) ); then
             echo "first condition OK";
-            if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
+            if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
               echo "Delete $release"
               helm delete -n $namespace $release
             fi
           fi
         fi
-      else 
+      else
         echo "Release do not seem to be staging deploy"
         echo "We skip anti regression test"
-        if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
+        if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
           echo "Delete $release"
           helm delete -n $namespace $release
         fi
       fi
     elif [[ $action == "cancel" ]]; then
       echo "Action cancel"
-      if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-${actualVersion} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
-        helm delete -n $namespace $release
+      if [[ $release != ${applicationName}-${versionToDeploy} ]] && [[ $release != ${applicationName}-network ]] && [[ $release != ${applicationName}-cron-jobs ]]; then
         echo "Delete $release"
+        helm delete -n $namespace $release
       fi
-    else 
+    else
       echo "Unknown Action $action"
     fi
   done
@@ -558,7 +558,7 @@ else
   echo "Actual version is $actualVersion, so ignore old version cleaner"
 fi
 
-# Delete useless empty RS 
+# Delete useless empty RS
 echo "Clean old and empty replicaset set."
 kubectl -n $namespace delete rs $(kubectl get rs --no-headers -n $namespace -l "app.kubernetes.io/name=${applicationName}" | awk '{if ($2 + $3 + $4 == 0) print $1}')
 
