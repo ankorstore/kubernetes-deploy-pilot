@@ -152,8 +152,9 @@ done
 
 applicationName=$1
 actualVersion="v0.0.0"
-helmChartRepositoryName="ankorstore-registry"
-helmChartRepositoryAddress="https://charts.tools.ankorstore.io/"
+helmChartRepositoryName="helm-local"
+ChartRepositoryUsername="ankorstore-ci-bot"
+helmChartRepositoryAddress="https://ankorstore.jfrog.io/artifactory/api/helm/"
 applicationChartName="web-application"
 networkChartName="web-network"
 workerChartName="worker-application"
@@ -210,7 +211,7 @@ fi
 ##############################################################
 
 # update all helm repository
-helm repo add $helmChartRepositoryName $helmChartRepositoryAddress
+helm repo add $helmChartRepositoryName $ChartRepositoryUrl --username $ChartRepositoryUsername --password ${{ secrets.JF_ACCESS_TOKEN }}
 helm repo update
 
 # convert latest version name in the last avaible version on repo
