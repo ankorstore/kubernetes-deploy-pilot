@@ -38,6 +38,7 @@ cronJobsChartVersion="" # => --cron-jobs-chart-version
 githubId="" # => --github-id
 githubPath="" # => --github-path
 githubUrl="" # => --github-url
+jfAccessToken="" # => --jf-access-token
 
 while test $# -gt 0; do
   case "$1" in
@@ -67,6 +68,8 @@ while test $# -gt 0; do
       echo "--github-id=GITHUBID                               Github repo ID"
       echo "--github-path=GITHUBPATH                           Github repo PATH"
       echo "--github-url=GITHUBURL                             Github repo URL"
+      echo "--jf-access-token=JF_ACCESS_TOKEN                  JFrog Access Token"
+
       exit 0
       ;;
     --application-image-tag*)
@@ -141,6 +144,10 @@ while test $# -gt 0; do
       namespace=`echo $1 | sed -e 's/^[^=]*=//g'`
       shift
       ;;
+    --jf-access-token*)
+      jfAccessToken=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
     *)
       break
       ;;
@@ -178,7 +185,7 @@ defaultNewVersionReplicas=2
 # echo "githubId => $githubId"
 # echo "githubPath => $githubPath"
 # echo "githubUrl => $githubUrl"
-# echo "jf-access-token => $jf_access_token"
+echo "jf-access-token => $jfAccessToken"
 
 # exit 0
 
@@ -213,7 +220,7 @@ fi
 ##############################################################
 
 # update all helm repository
-helm repo add $helmChartRepositoryName $ChartRepositoryUrl --username $ChartRepositoryUsername --password $JF_ACCESS_TOKEN
+helm repo add $helmChartRepositoryName $ChartRepositoryUrl --username $ChartRepositoryUsername --password $jfAccessToken
 helm repo update
 
 # convert latest version name in the last avaible version on repo

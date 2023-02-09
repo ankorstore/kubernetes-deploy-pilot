@@ -79,6 +79,9 @@ inputs:
     description: 'Application github repo url'
     required: false
     default: "https://github.com"
+  jf-access-token:
+    description: 'Application jf token'
+    required: true
 outputs:
   new-version: 
     description: "Return the new version number deployed"
@@ -92,7 +95,6 @@ runs:
     - id: main
       env: 
         BASE_WORKING_PATH: "${{ github.workspace }}"
-        JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
       run: |
         ${{ github.action_path }}/main.sh \
         --application-image-tag="${{ inputs.useApplicationVersionForImageTag }}" \
@@ -113,7 +115,7 @@ runs:
         --github-id="${{ inputs.github-id }}" \
         --github-path="${{ inputs.github-path }}" \
         --github-url="${{ inputs.github-url }}" \
-        --jf-access-token="$jf_access_token" \
+        --jf-access-token="${{ inputs.jf-access-token }}" \
         ${{ inputs.application-name }}
       shell: bash
     
