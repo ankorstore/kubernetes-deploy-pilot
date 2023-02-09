@@ -15,6 +15,7 @@
 # --github-id="zefz848ezfze8e" \
 # --github-path="ankorstore/ankorstore" \
 # --github-url="https://github.com/ankorstore/ankorstore" \
+# --jf-access-token="$jf_access_token"
 # fotom
 
 ##############################################################
@@ -177,6 +178,7 @@ defaultNewVersionReplicas=2
 # echo "githubId => $githubId"
 # echo "githubPath => $githubPath"
 # echo "githubUrl => $githubUrl"
+# echo "jf-access-token => $jf_access_token"
 
 # exit 0
 
@@ -211,7 +213,7 @@ fi
 ##############################################################
 
 # update all helm repository
-helm repo add $helmChartRepositoryName $ChartRepositoryUrl --username $ChartRepositoryUsername --password ${{ secrets.JF_ACCESS_TOKEN }}
+helm repo add $helmChartRepositoryName $ChartRepositoryUrl --username $ChartRepositoryUsername --password $JF_ACCESS_TOKEN
 helm repo update
 
 # convert latest version name in the last avaible version on repo

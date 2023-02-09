@@ -4,6 +4,7 @@ description: 'An action to control and apply deployment on k8s cluster based on 
 branding:
   icon: 'upload'
   color: 'blue'
+
 inputs:
   version-to-deploy: 
     description: 'The new version release you want to deploy'
@@ -91,6 +92,7 @@ runs:
     - id: main
       env: 
         BASE_WORKING_PATH: "${{ github.workspace }}"
+        JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
       run: |
         ${{ github.action_path }}/main.sh \
         --application-image-tag="${{ inputs.useApplicationVersionForImageTag }}" \
@@ -111,6 +113,7 @@ runs:
         --github-id="${{ inputs.github-id }}" \
         --github-path="${{ inputs.github-path }}" \
         --github-url="${{ inputs.github-url }}" \
+        --jf-access-token="$jf_access_token" \
         ${{ inputs.application-name }}
       shell: bash
     
